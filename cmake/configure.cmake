@@ -162,3 +162,5 @@ if (LITE_ON_MODEL_OPTIMIZE_TOOL)
   add_definitions("-DLITE_ON_MODEL_OPTIMIZE_TOOL")
 endif(LITE_ON_MODEL_OPTIMIZE_TOOL)
 
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L/home/zpy/Paddle-Lite/model-encrypt-sdk/android/arm64-v8a -lmodelcrypt -lz")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -L/home/zpy/Paddle-Lite/model-encrypt-sdk/android/arm64-v8a -lmodelcrypt -lz")

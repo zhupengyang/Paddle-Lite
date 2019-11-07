@@ -14,6 +14,7 @@
 
 #include "lite/api/light_api.h"
 #include <algorithm>
+#include "model-encrypt-sdk/android/include/model_decrypt.h"
 
 namespace paddle {
 namespace lite {
