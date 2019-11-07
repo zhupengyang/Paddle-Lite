@@ -31,7 +31,9 @@ else()
         # Need to add HIAI runtime libs (libhiai.so) dependency
         target_link_libraries(paddle_lite_jni ${npu_runtime_libs})
     endif()
+    #target_link_libraries(paddle_lite_jni ${enc_libs})
 endif()
+target_link_libraries(paddle_lite_jni ${enc_libs})
 
 if (APPLE)
     # MacOS only accepts JNI lib ends with .jnilib or .dylib

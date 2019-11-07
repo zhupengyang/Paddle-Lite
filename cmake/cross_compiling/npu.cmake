@@ -12,6 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(ENC_ROOT "/home/zpy/Paddle-Lite/model-encrypt-sdk/android/arm64-v8a")
+
+find_library(ENC_FILE NAMES modelcrypt PATHS ${ENC_ROOT})
+if(NOT ENC_FILE)
+  message(FATAL_ERROR "Can not find ENC_FILE in ${ENC_ROOT}")
+else()
+  message(STATUS "Found ENC_DDK Library: ${ENC_FILE}")
+  add_library(enc_ddk_model STATIC IMPORTED GLOBAL)
+  set_property(TARGET enc_ddk_model PROPERTY IMPORTED_LOCATION ${ENC_FILE})
+endif()
+
+find_library(Z_FILE NAMES z PATHS ${ENC_ROOT})
+if(NOT Z_FILE)
+  message(FATAL_ERROR "Can not find Z_FILE in ${ENC_ROOT}")
+else()
+  message(STATUS "Found ENC_DDK Library: ${ENC_FILE}")
+  add_library(enc_ddk_z STATIC IMPORTED GLOBAL)
+  set_property(TARGET enc_ddk_z PROPERTY IMPORTED_LOCATION ${Z_FILE})
+endif()
+
+set(enc_libs enc_ddk_model enc_ddk_z CACHE INTERNAL "enc ddk runtime libs")
+
 if(NOT LITE_WITH_NPU)
   return()
 endif()
@@ -76,6 +98,4 @@ endif()
 
 set(npu_runtime_libs npu_ddk_hiai CACHE INTERNAL "npu ddk runtime libs")
 set(npu_builder_libs npu_ddk_ir npu_ddk_ir_build CACHE INTERNAL "npu ddk builder libs")
-
-
 
