@@ -107,6 +107,62 @@ void FillInputTensors(
 #undef FILL_TENSOR_WITH_TYPE
 }
 
+void FillTransformerInput(
+    const std::shared_ptr<lite_api::PaddlePredictor>& predictor) {
+  // enc_out (1,16,512) fp32
+  auto enc_out_tensor = predictor->GetInput(0);
+  std::vector<int64_t> enc_out_dims{1, 16, 512};
+  enc_out_tensor->Resize(enc_out_dims);
+  auto enc_out_data = enc_out_tensor->mutable_data<float>();
+  auto enc_out_size = ShapeProduction(enc_out_dims);
+  for (int i = 0; i < enc_out_size; i++) {
+    enc_out_data[i] = 0;
+  }
+
+  // trg_word (1,1,1) lod([[0,1],[0,1]]) int64
+  auto trg_word_tensor = predictor->GetInput(1);
+  std::vector<int64_t> trg_word_dims{1, 1, 1};
+  std::vector<std::vector<uint64_t>> trg_word_lod{{0, 1}, {0, 1}};
+  trg_word_tensor->Resize(trg_word_dims);
+  trg_word_tensor->SetLoD(trg_word_lod);
+  auto trg_word_data = trg_word_tensor->mutable_data<int64_t>();
+  auto trg_word_size = ShapeProduction(trg_word_dims);
+  for (int i = 0; i < trg_word_size; i++) {
+    trg_word_data[i] = 0;
+  }
+
+  // init_score (1,1) lod([[0,1],[0,1]]) fp32
+  auto init_score_tensor = predictor->GetInput(2);
+  std::vector<int64_t> init_score_dims{1, 1};
+  init_score_tensor->Resize(init_score_dims);
+  init_score_tensor->SetLoD(trg_word_lod);
+  auto init_score_data = init_score_tensor->mutable_data<float>();
+  auto init_score_size = ShapeProduction(init_score_dims);
+  for (int i = 0; i < trg_word_size; i++) {
+    init_score_data[i] = 0;
+  }
+
+  // init_idx (1) int32
+  auto init_idx_tensor = predictor->GetInput(3);
+  std::vector<int64_t> init_idx_dims{1};
+  init_idx_tensor->Resize(init_idx_dims);
+  auto init_idx_data = init_idx_tensor->mutable_data<int>();
+  auto init_idx_size = ShapeProduction(init_idx_dims);
+  for (int i = 0; i < init_idx_size; i++) {
+    init_idx_data[i] = 0;
+  }
+
+  // trg_src_attn_bias (1,8,1,16) fp32
+  auto trg_src_attn_bias_tensor = predictor->GetInput(4);
+  std::vector<int64_t> trg_src_attn_bias_dims{1, 8, 1, 16};
+  trg_src_attn_bias_tensor->Resize(trg_src_attn_bias_dims);
+  auto trg_src_attn_bias_data = trg_src_attn_bias_tensor->mutable_data<float>();
+  auto trg_src_attn_bias_size = ShapeProduction(trg_src_attn_bias_dims);
+  for (int i = 0; i < trg_src_attn_bias_size; i++) {
+    trg_src_attn_bias_data[i] = 0;
+  }
+}
+
 void CheckOutputTensors(
     const std::shared_ptr<lite_api::PaddlePredictor>& tar_predictor,
     const std::shared_ptr<lite_api::PaddlePredictor>& ref_predictor,
@@ -161,7 +217,11 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
   mobile_config.set_power_mode(lite_api::PowerMode::LITE_POWER_HIGH);
   mobile_config.set_threads(1);
   predictor = lite_api::CreatePaddlePredictor(mobile_config);
+#if 0
   FillInputTensors(predictor, input_tensor_shape, input_tensor_type, 1);
+#else
+  FillTransformerInput(predictor);
+#endif
   // Run optimized model
   for (int i = 0; i < FLAGS_warmup; i++) {
     predictor->Run();
@@ -191,6 +251,8 @@ TEST(Subgraph, generate_model_and_check_precision) {
   std::vector<lite_api::Place> valid_places({
 #ifdef LITE_WITH_ARM
       lite_api::Place{TARGET(kARM), PRECISION(kFloat)},
+      lite_api::Place{TARGET(kARM), PRECISION(kInt64)},
+      lite_api::Place{TARGET(kARM), PRECISION(kInt32)},
 #endif
 #ifdef LITE_WITH_X86
       lite_api::Place{TARGET(kX86), PRECISION(kFloat)},
@@ -204,6 +266,7 @@ TEST(Subgraph, generate_model_and_check_precision) {
                                  input_tensor_shape,
                                  input_tensor_type,
                                  FLAGS_optimized_model_dir + "_ref_opt_model");
+#if 0
 // Generate and run optimized model on NPU/XPU as the target predictor
 #ifdef LITE_WITH_NPU
   valid_places.push_back(lite_api::Place{TARGET(kNPU), PRECISION(kFloat)});
@@ -221,6 +284,7 @@ TEST(Subgraph, generate_model_and_check_precision) {
   // Check the difference of the output tensors between reference predictor and
   // target predictor
   CheckOutputTensors(tar_predictor, ref_predictor, output_tensor_type);
+#endif
 }
 
 }  // namespace lite
