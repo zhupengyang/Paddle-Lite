@@ -448,20 +448,20 @@ class MulticlassNmsComputeTester : public arena::TestCase {
   void PrepareData() override {
     std::vector<float> bboxes(bboxes_dims_.production());
     for (int i = 0; i < bboxes_dims_.production(); ++i) {
-      bboxes[i] = i * 1. / bboxes_dims_.production();
+      bboxes[i] = (i % 4) * 0.1f;
     }
     SetCommonTensor(bboxes_, bboxes_dims_, bboxes.data());
 
     std::vector<float> scores(scores_dims_.production());
     for (int i = 0; i < scores_dims_.production(); ++i) {
-      scores[i] = i * 1. / scores_dims_.production();
+      scores[i] = (10 - (i % 10)) * 0.1f;
     }
     SetCommonTensor(scores_, scores_dims_, scores.data());
   }
 };
 
 void TestMulticlassNms(Place place, float abs_error) {
-  int N = 3;
+  int N = 1;
   int M = 2500;
   for (int class_num : {2, 4, 10}) {
     std::vector<int64_t> bbox_shape{N, M, 4};

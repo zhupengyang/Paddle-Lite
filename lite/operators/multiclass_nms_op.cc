@@ -44,6 +44,8 @@ bool MulticlassNmsOpLite::CheckShape() const {
 bool MulticlassNmsOpLite::InferShapeImpl() const {
   // InferShape is useless for multiclass_nms
   // out's dim is not sure before the end of calculation
+  auto box_dims = param_.bboxes->dims();
+  param_.out->Resize({box_dims[1], box_dims[2] + 2});
   return true;
 }
 
