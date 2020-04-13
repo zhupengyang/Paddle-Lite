@@ -15,9 +15,6 @@
 #include <gtest/gtest.h>
 #include <cmath>
 #include "lite/api/paddle_api.h"
-#include "lite/api/paddle_use_kernels.h"
-#include "lite/api/paddle_use_ops.h"
-#include "lite/api/paddle_use_passes.h"
 #include "lite/api/test_helper.h"
 #include "lite/utils/cp_logging.h"
 
@@ -250,9 +247,8 @@ TEST(Subgraph, generate_model_and_check_precision) {
   auto input_tensor_type = TypeParsing(FLAGS_input_tensor_type);
   auto output_tensor_type = TypeParsing(FLAGS_output_tensor_type);
   std::vector<lite_api::Place> valid_places({
-      lite_api::Place{TARGET(kARM), PRECISION(kInt64)},
-      lite_api::Place{TARGET(kARM), PRECISION(kInt32)},
       lite_api::Place{TARGET(kARM), PRECISION(kFloat)},
+      lite_api::Place{TARGET(kARM), PRECISION(kInt64)},
   });
   // Generate and run optimized model on CPU as the reference predictor
   auto ref_predictor = TestModel(FLAGS_model_dir,
