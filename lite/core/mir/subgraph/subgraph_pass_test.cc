@@ -15,9 +15,11 @@
 #include <gtest/gtest.h>
 #include <cmath>
 #include "lite/api/paddle_api.h"
+#include "lite/api/paddle_use_kernels.h"
+#include "lite/api/paddle_use_ops.h"
+#include "lite/api/paddle_use_passes.h"
 #include "lite/api/test_helper.h"
 #include "lite/utils/cp_logging.h"
-#include "lite/utils/string.h"
 
 DEFINE_string(model_file, "", "model file path of combined protobuf model");
 DEFINE_string(params_file, "", "params file path of combined protobuf model");
@@ -32,17 +34,43 @@ namespace lite {
 // The helper functions for loading and running model from command line and
 // verifying output data
 std::vector<std::string> TypeParsing(std::string text) {
-  return Split(text, ":");
+  std::vector<std::string> types;
+  while (!text.empty()) {
+    size_t index = text.find_first_of(":");
+    std::string type = text.substr(0, index);
+    VLOG(3) << type;
+    types.push_back(type);
+    if (index == std::string::npos) {
+      break;
+    } else {
+      text = text.substr(index + 1);
+    }
+  }
+  return types;
 }
 
 std::vector<std::vector<int64_t>> ShapeParsing(std::string text) {
   std::vector<std::vector<int64_t>> shapes;
-  std::vector<std::string> shape_strings = Split(text, ":");
-  shapes.resize(shape_strings.size());
-  for (int i = 0; i < shape_strings.size(); i++) {
-    std::vector<std::string> shape_nums = Split(shape_strings[i], ",");
-    for (auto shape_num : shape_nums) {
-      shapes[i].push_back(atoi(shape_num.c_str()));
+  while (!text.empty()) {
+    size_t index = text.find_first_of(":");
+    std::string slice = text.substr(0, index);
+    std::vector<int64_t> shape;
+    while (!slice.empty()) {
+      size_t index = slice.find_first_of(",");
+      int d = atoi(slice.substr(0, index).c_str());
+      VLOG(3) << d;
+      shape.push_back(d);
+      if (index == std::string::npos) {
+        break;
+      } else {
+        slice = slice.substr(index + 1);
+      }
+    }
+    shapes.push_back(shape);
+    if (index == std::string::npos) {
+      break;
+    } else {
+      text = text.substr(index + 1);
     }
   }
   return shapes;
@@ -77,6 +105,63 @@ void FillInputTensors(
     }
   }
 #undef FILL_TENSOR_WITH_TYPE
+}
+
+void FillTransformerInput(
+    const std::shared_ptr<lite_api::PaddlePredictor>& predictor) {
+  int c = 16;
+  // src_word (n,c,1) int64
+  auto src_word_tensor = predictor->GetInput(0);
+  std::vector<int64_t> src_word_dims{1, c, 1};
+  src_word_tensor->Resize(src_word_dims);
+  auto src_word_data = src_word_tensor->mutable_data<int64_t>();
+  auto src_word_size = ShapeProduction(src_word_dims);
+  for (int i = 0; i < src_word_size; i++) {
+    src_word_data[i] = 1;
+  }
+
+  // src_pos (n,c,1) range(c) int64
+  auto src_pos_tensor = predictor->GetInput(1);
+  std::vector<int64_t> src_pos_dims{1, c, 1};
+  src_pos_tensor->Resize(src_pos_dims);
+  auto src_pos_data = src_pos_tensor->mutable_data<int64_t>();
+  auto src_pos_size = ShapeProduction(src_pos_dims);
+  for (int i = 0; i < src_pos_size; i++) {
+    src_pos_data[i] = i;
+  }
+
+  // trg_word (n,1,1) zeros int64
+  auto trg_word_tensor = predictor->GetInput(2);
+  std::vector<int64_t> trg_word_dims{1, 1, 1};
+  std::vector<std::vector<uint64_t>> trg_word_lod{{0, 1}, {0, 1}};
+  trg_word_tensor->Resize(trg_word_dims);
+  trg_word_tensor->SetLoD(trg_word_lod);
+  auto trg_word_data = trg_word_tensor->mutable_data<int64_t>();
+  auto trg_word_size = ShapeProduction(trg_word_dims);
+  for (int i = 0; i < trg_word_size; i++) {
+    trg_word_data[i] = 0;
+  }
+
+  // init_score (n,1) lod([[0,1],[0,1]]) fp32
+  auto init_score_tensor = predictor->GetInput(3);
+  std::vector<int64_t> init_score_dims{1, 1};
+  init_score_tensor->Resize(init_score_dims);
+  init_score_tensor->SetLoD(trg_word_lod);
+  auto init_score_data = init_score_tensor->mutable_data<float>();
+  auto init_score_size = ShapeProduction(init_score_dims);
+  for (int i = 0; i < trg_word_size; i++) {
+    init_score_data[i] = 0;
+  }
+
+  // init_idx (1) int32
+  auto init_idx_tensor = predictor->GetInput(4);
+  std::vector<int64_t> init_idx_dims{1};
+  init_idx_tensor->Resize(init_idx_dims);
+  auto init_idx_data = init_idx_tensor->mutable_data<int>();
+  auto init_idx_size = ShapeProduction(init_idx_dims);
+  for (int i = 0; i < init_idx_size; i++) {
+    init_idx_data[i] = 0;
+  }
 }
 
 void CheckOutputTensors(
@@ -133,7 +218,11 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
   mobile_config.set_power_mode(lite_api::PowerMode::LITE_POWER_HIGH);
   mobile_config.set_threads(1);
   predictor = lite_api::CreatePaddlePredictor(mobile_config);
+#if 0
   FillInputTensors(predictor, input_tensor_shape, input_tensor_type, 1);
+#else
+  FillTransformerInput(predictor);
+#endif
   // Run optimized model
   for (int i = 0; i < FLAGS_warmup; i++) {
     predictor->Run();
@@ -161,12 +250,9 @@ TEST(Subgraph, generate_model_and_check_precision) {
   auto input_tensor_type = TypeParsing(FLAGS_input_tensor_type);
   auto output_tensor_type = TypeParsing(FLAGS_output_tensor_type);
   std::vector<lite_api::Place> valid_places({
-#ifdef LITE_WITH_ARM
+      lite_api::Place{TARGET(kARM), PRECISION(kInt64)},
+      lite_api::Place{TARGET(kARM), PRECISION(kInt32)},
       lite_api::Place{TARGET(kARM), PRECISION(kFloat)},
-#endif
-#ifdef LITE_WITH_X86
-      lite_api::Place{TARGET(kX86), PRECISION(kFloat)},
-#endif
   });
   // Generate and run optimized model on CPU as the reference predictor
   auto ref_predictor = TestModel(FLAGS_model_dir,
@@ -176,11 +262,12 @@ TEST(Subgraph, generate_model_and_check_precision) {
                                  input_tensor_shape,
                                  input_tensor_type,
                                  FLAGS_optimized_model_dir + "_ref_opt_model");
+#if 0
 // Generate and run optimized model on NPU/XPU as the target predictor
 #ifdef LITE_WITH_NPU
   valid_places.push_back(lite_api::Place{TARGET(kNPU), PRECISION(kFloat)});
 #endif
-#ifdef LITE_WITH_XTCL
+#ifdef LITE_WITH_XPU
   valid_places.push_back(lite_api::Place{TARGET(kXPU), PRECISION(kFloat)});
 #endif
   auto tar_predictor = TestModel(FLAGS_model_dir,
@@ -193,6 +280,7 @@ TEST(Subgraph, generate_model_and_check_precision) {
   // Check the difference of the output tensors between reference predictor and
   // target predictor
   CheckOutputTensors(tar_predictor, ref_predictor, output_tensor_type);
+#endif
 }
 
 }  // namespace lite
