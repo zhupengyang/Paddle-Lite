@@ -312,5 +312,5 @@ void MemoryOptimizePass::Apply(const std::unique_ptr<SSAGraph>& graph) {
 }  // namespace paddle
 
 REGISTER_MIR_PASS(memory_optimize_pass, paddle::lite::mir::MemoryOptimizePass)
-    .BindTargets({TARGET(kARM), TARGET(kOpenCL)})
-    .ExcludeTargets({TARGET(kNPU), TARGET(kXPU), TARGET(kBM)});
+    .BindTargets({TARGET(kOpenCL)})
+    .ExcludeTargets({TARGET(kARM), TARGET(kNPU), TARGET(kXPU), TARGET(kBM)});

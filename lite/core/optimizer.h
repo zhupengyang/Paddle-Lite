@@ -86,41 +86,42 @@ class Optimizer {
            "npu_subgraph_pass",
            "xpu_subgraph_pass",
            "bm_subgraph_pass",
-           "static_kernel_pick_pass",        // pick original kernel from graph
+           "static_kernel_pick_pass",  // pick original kernel from graph
+           "argument_type_display_pass",
            "variable_place_inference_pass",  // inference arg/var's
            // info(target/precision/layout/device)
            // using kernel info
-           "argument_type_display_pass",  // debug pass: show arg-type-node's
-                                          // info
-                                          // (target/precision/layout/device)
+           // "argument_type_display_pass",  // debug pass: show arg-type-node's
+           // info
+           // (target/precision/layout/device)
 
            "type_target_cast_pass",  // add io_copy/io_copy_once if meet
                                      // different targets when last and next
                                      // node
            "variable_place_inference_pass",  //
-           "argument_type_display_pass",     //
+           // "argument_type_display_pass",     //
 
-           "io_copy_kernel_pick_pass",    //
-           "argument_type_display_pass",  //
+           "io_copy_kernel_pick_pass",  //
+           // "argument_type_display_pass",  //
 
            "variable_place_inference_pass",  //
-           "argument_type_display_pass",     //
+           // "argument_type_display_pass",     //
 
            "type_precision_cast_pass",       //
            "variable_place_inference_pass",  //
-           "argument_type_display_pass",     //
+           // "argument_type_display_pass",     //
 
            "type_layout_cast_pass",  // add layout/layout_once op if meet
                                      // different layout when last and next node
-           "argument_type_display_pass",  //
+           // "argument_type_display_pass",  //
 
            "variable_place_inference_pass",  //
-           "argument_type_display_pass",
+           // "argument_type_display_pass",
 
            "mlu_subgraph_pass",
 
            "runtime_context_assign_pass",
-           "argument_type_display_pass",
+           // "argument_type_display_pass",
 
            "mlu_postprocess_pass",
 

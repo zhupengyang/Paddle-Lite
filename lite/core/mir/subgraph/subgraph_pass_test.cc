@@ -247,8 +247,8 @@ TEST(Subgraph, generate_model_and_check_precision) {
   auto input_tensor_type = TypeParsing(FLAGS_input_tensor_type);
   auto output_tensor_type = TypeParsing(FLAGS_output_tensor_type);
   std::vector<lite_api::Place> valid_places({
-      lite_api::Place{TARGET(kARM), PRECISION(kFloat)},
       lite_api::Place{TARGET(kARM), PRECISION(kInt64)},
+      lite_api::Place{TARGET(kARM), PRECISION(kFloat)},
   });
   // Generate and run optimized model on CPU as the reference predictor
   auto ref_predictor = TestModel(FLAGS_model_dir,
