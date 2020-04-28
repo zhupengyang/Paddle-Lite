@@ -309,23 +309,23 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
   }
   for (int i = 0; i < FLAGS_repeats; i++) {
     auto start = GetCurrentUS();
-    FillTransformerNewInputN(predictor, inputs, 0);
+    FillTransformerNewInputN(predictor, inputs, i);
     predictor->Run();
     LOG(INFO) << i << ", " << GetCurrentUS() - start << "us";
-  }
 
-  auto out_tensor_0 = predictor->GetOutput(0);
-  auto out_data_0 = out_tensor_0->data<int64_t>();
-  auto out_size_0 = ShapeProduction(out_tensor_0->shape());
-  for (int i = 0; i < out_size_0; i++) {
-    LOG(INFO) << "-- out_0: " << out_data_0[i];
-  }
+    auto out_tensor_0 = predictor->GetOutput(0);
+    auto out_data_0 = out_tensor_0->data<int64_t>();
+    auto out_size_0 = ShapeProduction(out_tensor_0->shape());
+    for (int i = 0; i < out_size_0; i++) {
+      LOG(INFO) << "-- out_0: " << out_data_0[i];
+    }
 
-  auto out_tensor_1 = predictor->GetOutput(1);
-  auto out_data_1 = out_tensor_1->data<float>();
-  auto out_size_1 = ShapeProduction(out_tensor_1->shape());
-  for (int i = 0; i < out_size_1; i++) {
-    LOG(INFO) << "-- out_1: " << out_data_1[i];
+    auto out_tensor_1 = predictor->GetOutput(1);
+    auto out_data_1 = out_tensor_1->data<float>();
+    auto out_size_1 = ShapeProduction(out_tensor_1->shape());
+    for (int i = 0; i < out_size_1; i++) {
+      LOG(INFO) << "-- out_1: " << out_data_1[i];
+    }
   }
 
   return predictor;
