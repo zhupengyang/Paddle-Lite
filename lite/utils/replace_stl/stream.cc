@@ -40,15 +40,21 @@ void ostream::pad(const std::string& text) {
 #ifdef LITE_SHUTDOWN_LOG
 #define ADD_DATA_AS_STRING(data_, obj_)
 #else
-#define ADD_DATA_AS_STRING(data_, obj_)             \
-  std::string text = paddle::lite::to_string(obj_); \
-  pad(text);                                        \
+#define ADD_DATA_AS_STRING(data_, obj_)    \
+  std::string text = std::to_string(obj_); \
+  pad(text);                               \
   data_ = data_ + text;
 
 #endif
 
 template <>
 ostream& ostream::operator<<(const char* obj) {
+  data_ = data_ + std::string(obj);
+  return *this;
+}
+
+template <>
+ostream& ostream::operator<<(char* const& obj) {
   data_ = data_ + std::string(obj);
   return *this;
 }
