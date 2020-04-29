@@ -56,6 +56,8 @@ bool MatMulOpLite::CheckShape() const {
 }
 
 bool MatMulOpLite::InferShapeImpl() const {
+  // LOG(INFO)<<"--- matmul x_dims: "<<param_.X->dims();
+  // LOG(INFO)<<"--- matmul y_dims: "<<param_.Y->dims();
   const auto x_dims = param_.X->dims();
   const auto y_dims = param_.Y->dims();
   bool x_transpose = param_.transpose_X;

@@ -38,6 +38,7 @@ bool MulOpLite::CheckShape() const {
 bool MulOpLite::InferShapeImpl() const {
   const auto x_dims = param_.x->dims();
   const auto y_dims = param_.y->dims();
+  // LOG(INFO) << "--- mul x_dims: " << param_.x->dims();
 
   // Set output dims
   std::vector<int64_t> out_dims;
