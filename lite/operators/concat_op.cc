@@ -59,6 +59,7 @@ bool ConcatOpLite::InferShapeImpl() const {
   }
   // Set output dims
   param_.output->Resize(out_dims);
+  // LOG(INFO)<<"-- concat out_dims: "<<out_dims;
   auto out_lod = param_.output->mutable_lod();
   *out_lod = param_.x[0]->lod();
   return true;

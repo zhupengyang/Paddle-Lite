@@ -28,6 +28,7 @@ bool LayerNormOp::CheckShape() const {
 }
 
 bool LayerNormOp::InferShapeImpl() const {
+  // LOG(INFO)<<"--- x_dims: "<<param_.X->dims();
   auto out_dims = param_.X->dims();
   param_.Y->Resize(out_dims);
   auto inner_size = out_dims.Flatten2D(param_.begin_norm_axis)[0];

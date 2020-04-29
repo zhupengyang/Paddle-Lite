@@ -134,9 +134,15 @@ void WhileCompute::PrepareForRun() {
 
 void WhileCompute::Run() {
   auto &param = this->Param<param_t>();
+  int while_num = 0;
+  LOG(INFO) << "--- while start.";
   while (param.cond->data<bool>()[0]) {
+    LOG(INFO) << "--- while time: " << while_num;
     executor_->Run();
+    while_num++;
   }
+  LOG(INFO) << "--- while end.";
+  LOG(INFO) << "--- while_num: " << while_num;
 }
 
 }  // namespace host
