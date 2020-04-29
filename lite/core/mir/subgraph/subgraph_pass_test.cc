@@ -99,17 +99,24 @@ void FillTransformerNewInputN(
     const std::shared_ptr<lite_api::PaddlePredictor>& predictor,
     const std::vector<std::vector<int64_t>>& inputs,
     int n) {
+  // padding to len=16
   auto input = inputs[n];
   int seq_len = input.size();
+  int max_seq_len = 16;
   int n_head = 8;
+  // src_word pad value
+  int64_t eos_idx = 1;
 
   // src_word [n,c]  int64
   auto src_word_tensor = predictor->GetInput(0);
-  std::vector<int64_t> src_word_dims{1, seq_len};
+  std::vector<int64_t> src_word_dims{1, max_seq_len};
   src_word_tensor->Resize(src_word_dims);
   auto src_word_data = src_word_tensor->mutable_data<int64_t>();
   for (int i = 0; i < seq_len; i++) {
     src_word_data[i] = input[i];
+  }
+  for (int i = seq_len; i < max_seq_len - seq_len; i++) {
+    src_word_data[i] = eos_idx;
   }
 
   // src_pos  [n,c]  int64  0-len
@@ -120,15 +127,27 @@ void FillTransformerNewInputN(
   for (int i = 0; i < seq_len; i++) {
     src_pos_data[i] = i;
   }
+  for (int i = seq_len; i < max_seq_len - seq_len; i++) {
+    src_word_data[i] = 0;
+  }
 
   // src_slf_attn_bias  [n,8,c,c]  float32 0; pad_value: -1e9
   auto src_slf_attn_bias_tensor = predictor->GetInput(2);
-  std::vector<int64_t> src_slf_attn_bias_dims{1, n_head, seq_len, seq_len};
+  std::vector<int64_t> src_slf_attn_bias_dims{
+      1, n_head, max_seq_len, max_seq_len};
   src_slf_attn_bias_tensor->Resize(src_slf_attn_bias_dims);
   auto src_slf_attn_bias_data = src_slf_attn_bias_tensor->mutable_data<float>();
   auto src_slf_attn_bias_size = ShapeProduction(src_slf_attn_bias_dims);
-  for (int i = 0; i < src_slf_attn_bias_size; i++) {
+  for (int i = 0; i < seq_len; i++) {
     src_slf_attn_bias_data[i] = 0;
+  }
+  for (int i = seq_len; i < max_seq_len - seq_len; i++) {
+    src_slf_attn_bias_data[i] = -1e9;
+  }
+  for (int i = 1; i < src_slf_attn_bias_size / max_seq_len; i++) {
+    for (int j = 0; j < max_seq_len; j++) {
+      src_slf_attn_bias_data[i * max_seq_len + j] = src_slf_attn_bias_data[j];
+    }
   }
 
   // trg_word  [1,1]  int64  0; need lod: [[0,1],[0,1]]
@@ -157,12 +176,14 @@ void FillTransformerNewInputN(
 
   // trg_src_attn_bias  [n,8,1,c]  float32
   auto trg_src_attn_bias_tensor = predictor->GetInput(6);
-  std::vector<int64_t> trg_src_attn_bias_dims{1, n_head, 1, seq_len};
+  std::vector<int64_t> trg_src_attn_bias_dims{1, n_head, 1, max_seq_len};
   trg_src_attn_bias_tensor->Resize(trg_src_attn_bias_dims);
   auto trg_src_attn_bias_data = trg_src_attn_bias_tensor->mutable_data<float>();
   auto trg_src_attn_bias_size = ShapeProduction(trg_src_attn_bias_dims);
-  for (int i = 0; i < trg_src_attn_bias_size; i++) {
-    trg_src_attn_bias_data[i] = 0;
+  for (int i = 0; i < trg_src_attn_bias_size / max_seq_len; i++) {
+    for (int j = 0; j < max_seq_len; j++) {
+      trg_src_attn_bias_data[i * max_seq_len + j] = src_slf_attn_bias_data[j];
+    }
   }
 }
 
