@@ -42,8 +42,8 @@ bool ConcatOpLite::InferShapeImpl() const {
     axis += inputs[0]->dims().size();
   }
 
-  LOG(INFO) << "-- concat x_dims_" << 0 << ": " << inputs[0]->dims();
-  LOG(INFO) << "-- concat x_dims_" << 1 << ": " << inputs[1]->dims();
+  //  LOG(INFO) << "-- concat x_dims_" << 0 << ": " << inputs[0]->dims();
+  // LOG(INFO) << "-- concat x_dims_" << 1 << ": " << inputs[1]->dims();
   auto out_dims = inputs[0]->dims();
   size_t in_zero_dims_size = out_dims.size();
   for (size_t i = 1; i < n; i++) {
@@ -61,7 +61,7 @@ bool ConcatOpLite::InferShapeImpl() const {
   }
   // Set output dims
   param_.output->Resize(out_dims);
-  LOG(INFO) << "-- concat out_dims: " << out_dims;
+  //  LOG(INFO) << "-- concat out_dims: " << out_dims;
   auto out_lod = param_.output->mutable_lod();
   *out_lod = param_.x[0]->lod();
   return true;
