@@ -142,7 +142,7 @@ void FillTransformerNewInputN(
     src_slf_attn_bias_data[i] = 0;
   }
   for (int i = seq_len; i < max_seq_len - seq_len; i++) {
-    src_slf_attn_bias_data[i] = -1e9;
+    src_slf_attn_bias_data[i] = -1e6;
   }
   for (int i = 1; i < src_slf_attn_bias_size / max_seq_len; i++) {
     for (int j = 0; j < max_seq_len; j++) {
@@ -371,9 +371,6 @@ TEST(Subgraph, generate_model_and_check_precision) {
       lite_api::Place{TARGET(kARM), PRECISION(kInt64)},
       lite_api::Place{TARGET(kARM), PRECISION(kFloat)},
 #endif
-#ifdef LITE_WITH_X86
-      lite_api::Place{TARGET(kX86), PRECISION(kFloat)},
-#endif
   });
   // Generate and run optimized model on CPU as the reference predictor
   auto ref_predictor = TestModel(FLAGS_model_dir,
@@ -384,12 +381,9 @@ TEST(Subgraph, generate_model_and_check_precision) {
                                  input_tensor_type,
                                  FLAGS_optimized_model_dir + "_ref_opt_model");
 // Generate and run optimized model on NPU/XPU as the target predictor
-#if 0
+#if 1
 #ifdef LITE_WITH_NPU
-  valid_places.push_back(lite_api::Place{TARGET(kNPU), PRECISION(kFloat)});
-#endif
-#ifdef LITE_WITH_XTCL
-  valid_places.push_back(lite_api::Place{TARGET(kXPU), PRECISION(kFloat)});
+  valid_places.push_back(lite_api::Place{TARGET(kNPU)});
 #endif
   auto tar_predictor = TestModel(FLAGS_model_dir,
                                  FLAGS_model_file,
