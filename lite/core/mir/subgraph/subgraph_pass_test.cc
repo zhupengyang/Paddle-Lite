@@ -121,7 +121,7 @@ void FillTransformerNewInputN(
 
   // src_pos  [n,c]  int64  0-len
   auto src_pos_tensor = predictor->GetInput(1);
-  std::vector<int64_t> src_pos_dims{1, seq_len};
+  std::vector<int64_t> src_pos_dims{1, max_seq_len};
   src_pos_tensor->Resize(src_pos_dims);
   auto src_pos_data = src_pos_tensor->mutable_data<int64_t>();
   for (int i = 0; i < seq_len; i++) {
