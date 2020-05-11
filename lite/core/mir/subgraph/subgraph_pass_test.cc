@@ -95,7 +95,7 @@ void ReadInputFromFile(const std::string& input_file,
   }
 }
 
-void FillTransformerNewInputN(
+void FillTransformerInput(
     const std::shared_ptr<lite_api::PaddlePredictor>& predictor,
     const std::vector<std::vector<int64_t>>& inputs,
     int n) {
@@ -174,8 +174,18 @@ void FillTransformerNewInputN(
   auto init_idx_data = init_idx_tensor->mutable_data<int>();
   init_idx_data[0] = 0;
 
+  // trg_slf_attn_bias  [n,8,1,8]  float32
+  auto trg_slf_attn_bias_tensor = predictor->GetInput(6);
+  std::vector<int64_t> trg_slf_attn_bias_dims{1, n_head, 1, n_head};
+  trg_slf_attn_bias_tensor->Resize(trg_slf_attn_bias_dims);
+  auto trg_slf_attn_bias_data = trg_slf_attn_bias_tensor->mutable_data<float>();
+  auto trg_slf_attn_bias_size = ShapeProduction(trg_slf_attn_bias_dims);
+  for (int i = 0; i < trg_slf_attn_bias_size; i++) {
+    trg_slf_attn_bias_data[i] = 0.f;
+  }
+
   // trg_src_attn_bias  [n,8,1,c]  float32
-  auto trg_src_attn_bias_tensor = predictor->GetInput(6);
+  auto trg_src_attn_bias_tensor = predictor->GetInput(7);
   std::vector<int64_t> trg_src_attn_bias_dims{1, n_head, 1, max_seq_len};
   trg_src_attn_bias_tensor->Resize(trg_src_attn_bias_dims);
   auto trg_src_attn_bias_data = trg_src_attn_bias_tensor->mutable_data<float>();
@@ -185,82 +195,16 @@ void FillTransformerNewInputN(
       trg_src_attn_bias_data[i * max_seq_len + j] = src_slf_attn_bias_data[j];
     }
   }
-}
 
-void FillTransformerNewInput(
-    const std::shared_ptr<lite_api::PaddlePredictor>& predictor) {
-  int c = 16;
-  // src_word [n,c]  int64
-  auto src_word_tensor = predictor->GetInput(0);
-  std::vector<int64_t> src_word_dims{1, c};
-  src_word_tensor->Resize(src_word_dims);
-  auto src_word_data = src_word_tensor->mutable_data<int64_t>();
-  auto src_word_size = ShapeProduction(src_word_dims);
-  for (int i = 0; i < src_word_size; i++) {
-    src_word_data[i] = 1;
-  }
-
-  // src_pos  [n,c]  int64  0-len
-  auto src_pos_tensor = predictor->GetInput(1);
-  std::vector<int64_t> src_pos_dims{1, c};
-  src_pos_tensor->Resize(src_pos_dims);
-  auto src_pos_data = src_pos_tensor->mutable_data<int64_t>();
-  auto src_pos_size = ShapeProduction(src_pos_dims);
-  for (int i = 0; i < src_pos_size; i++) {
-    src_pos_data[i] = i;
-  }
-
-  // src_slf_attn_bias  [n,8,c,c]  float32 0; pad_value: -1e9
-  auto src_slf_attn_bias_tensor = predictor->GetInput(2);
-  std::vector<int64_t> src_slf_attn_bias_dims{1, 8, c, c};
-  src_slf_attn_bias_tensor->Resize(src_slf_attn_bias_dims);
-  auto src_slf_attn_bias_data = src_slf_attn_bias_tensor->mutable_data<float>();
-  auto src_slf_attn_bias_size = ShapeProduction(src_slf_attn_bias_dims);
-  for (int i = 0; i < src_slf_attn_bias_size; i++) {
-    src_slf_attn_bias_data[i] = 0;
-  }
-
-  // trg_word  [1,1]  int64  0; need lod: [[0,1],[0,1]]
-  auto trg_word_tensor = predictor->GetInput(3);
-  std::vector<int64_t> trg_word_dims{1, 1};
-  std::vector<std::vector<uint64_t>> trg_word_lod{{0, 1}, {0, 1}};
-  trg_word_tensor->Resize(trg_word_dims);
-  trg_word_tensor->SetLoD(trg_word_lod);
-  auto trg_word_data = trg_word_tensor->mutable_data<int64_t>();
-  auto trg_word_size = ShapeProduction(trg_word_dims);
-  for (int i = 0; i < trg_word_size; i++) {
-    trg_word_data[i] = 0;
-  }
-
-  // init_score  [1,1]  float32  0; need lod: [[0,1],[0,1]]
-  auto init_score_tensor = predictor->GetInput(4);
-  std::vector<int64_t> init_score_dims{1, 1};
-  init_score_tensor->Resize(init_score_dims);
-  init_score_tensor->SetLoD(trg_word_lod);
-  auto init_score_data = init_score_tensor->mutable_data<float>();
-  auto init_score_size = ShapeProduction(init_score_dims);
-  for (int i = 0; i < trg_word_size; i++) {
-    init_score_data[i] = 0;
-  }
-
-  // init_idx (1) int32
-  auto init_idx_tensor = predictor->GetInput(5);
-  std::vector<int64_t> init_idx_dims{1};
-  init_idx_tensor->Resize(init_idx_dims);
-  auto init_idx_data = init_idx_tensor->mutable_data<int>();
-  auto init_idx_size = ShapeProduction(init_idx_dims);
-  for (int i = 0; i < init_idx_size; i++) {
-    init_idx_data[i] = 0;
-  }
-
-  // trg_src_attn_bias  [n,8,1,c]  float32
-  auto trg_src_attn_bias_tensor = predictor->GetInput(6);
-  std::vector<int64_t> trg_src_attn_bias_dims{1, 8, 1, c};
-  trg_src_attn_bias_tensor->Resize(trg_src_attn_bias_dims);
-  auto trg_src_attn_bias_data = trg_src_attn_bias_tensor->mutable_data<float>();
-  auto trg_src_attn_bias_size = ShapeProduction(trg_src_attn_bias_dims);
-  for (int i = 0; i < trg_src_attn_bias_size; i++) {
-    trg_src_attn_bias_data[i] = 0;
+  // kv_padding_selection  [8,8,8,1]  float32
+  auto kv_padding_selection_tensor = predictor->GetInput(8);
+  std::vector<int64_t> kv_padding_selection_dims{n_head, n_head, n_head, 1};
+  kv_padding_selection_tensor->Resize(kv_padding_selection_dims);
+  auto kv_padding_selection_data =
+      kv_padding_selection_tensor->mutable_data<float>();
+  auto kv_padding_selection_size = ShapeProduction(kv_padding_selection_dims);
+  for (int i = 0; i < kv_padding_selection_size; i++) {
+    kv_padding_selection_data[i] = 0.f;
   }
 }
 
@@ -318,19 +262,17 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
   mobile_config.set_power_mode(lite_api::PowerMode::LITE_POWER_HIGH);
   mobile_config.set_threads(1);
   predictor = lite_api::CreatePaddlePredictor(mobile_config);
-  // FillInputTensors(predictor, input_tensor_shape, input_tensor_type, 1);
-  // FillTransformerNewInput(predictor);
   std::vector<std::vector<int64_t>> inputs{};
   ReadInputFromFile(FLAGS_input_file, &inputs);
-  FillTransformerNewInputN(predictor, inputs, 0);
+  FillTransformerInput(predictor, inputs, 0);
   // Run optimized model
   for (int i = 0; i < FLAGS_warmup; i++) {
-    FillTransformerNewInputN(predictor, inputs, 0);
+    FillTransformerInput(predictor, inputs, 0);
     predictor->Run();
   }
   for (int i = 0; i < FLAGS_repeats; i++) {
     auto start = GetCurrentUS();
-    FillTransformerNewInputN(predictor, inputs, i);
+    FillTransformerInput(predictor, inputs, i);
     predictor->Run();
     LOG(INFO) << i << ", " << GetCurrentUS() - start << "us";
 
