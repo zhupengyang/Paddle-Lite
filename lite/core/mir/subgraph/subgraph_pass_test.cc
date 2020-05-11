@@ -150,29 +150,32 @@ void FillTransformerInput(
     }
   }
 
-  // trg_word  [1,1]  int64  0; need lod: [[0,1],[0,1]]
+  // trg_word  [2,1]  int64  0; need lod: [[0,2],[0,1,2]]
   auto trg_word_tensor = predictor->GetInput(3);
-  std::vector<int64_t> trg_word_dims{1, 1};
-  std::vector<std::vector<uint64_t>> trg_word_lod{{0, 1}, {0, 1}};
+  std::vector<int64_t> trg_word_dims{2, 1};
+  std::vector<std::vector<uint64_t>> trg_word_lod{{0, 2}, {0, 1, 2}};
   trg_word_tensor->Resize(trg_word_dims);
   trg_word_tensor->SetLoD(trg_word_lod);
   auto trg_word_data = trg_word_tensor->mutable_data<int64_t>();
   trg_word_data[0] = 0;
+  trg_word_data[1] = 0;
 
-  // init_score  [1,1]  float32  0; need lod: [[0,1],[0,1]]
+  // init_score  [2,1]  float32  0; need lod: [[0,2],[0,1,2]]
   auto init_score_tensor = predictor->GetInput(4);
-  std::vector<int64_t> init_score_dims{1, 1};
+  std::vector<int64_t> init_score_dims{2, 1};
   init_score_tensor->Resize(init_score_dims);
   init_score_tensor->SetLoD(trg_word_lod);
   auto init_score_data = init_score_tensor->mutable_data<float>();
   init_score_data[0] = 0.f;
+  init_score_data[0] = -1e6;
 
-  // init_idx (1) int32
+  // init_idx (2) int32
   auto init_idx_tensor = predictor->GetInput(5);
-  std::vector<int64_t> init_idx_dims{1};
+  std::vector<int64_t> init_idx_dims{2};
   init_idx_tensor->Resize(init_idx_dims);
   auto init_idx_data = init_idx_tensor->mutable_data<int>();
   init_idx_data[0] = 0;
+  init_idx_data[1] = 0;
 
   // trg_slf_attn_bias  [n,8,1,8]  float32
   auto trg_slf_attn_bias_tensor = predictor->GetInput(6);
