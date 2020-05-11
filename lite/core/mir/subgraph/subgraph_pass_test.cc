@@ -138,19 +138,17 @@ void FillTransformerInput(
   src_slf_attn_bias_tensor->Resize(src_slf_attn_bias_dims);
   auto src_slf_attn_bias_data = src_slf_attn_bias_tensor->mutable_data<float>();
   auto src_slf_attn_bias_size = ShapeProduction(src_slf_attn_bias_dims);
-  for (int i = 0; i < seq_len; i++) {
-    src_slf_attn_bias_data[i] = 0;
-  }
-  for (int i = seq_len; i < max_seq_len - seq_len; i++) {
-    src_slf_attn_bias_data[i] = -1e6;
-  }
-  for (int i = 1; i < src_slf_attn_bias_size / max_seq_len; i++) {
-    for (int j = 0; j < max_seq_len; j++) {
-      src_slf_attn_bias_data[i * max_seq_len + j] = src_slf_attn_bias_data[j];
+  int offset = 0;
+  for (int j = 0; j < src_slf_attn_bias_size / max_seq_len; j++) {
+    for (int i = 0; i < max_seq_len; i++) {
+      src_slf_attn_bias_data[offset++] = 0.0f;
+    }
+    for (int i = seq_len; i < max_seq_len; i++) {
+      src_slf_attn_bias_data[offset++] = -1e6f;
     }
   }
 
-#if 0
+#if 1
   // trg_word  [2,1]  int64  0; need lod: [[0,2],[0,1,2]]
   auto trg_word_tensor = predictor->GetInput(3);
   std::vector<int64_t> trg_word_dims{2, 1};
@@ -205,12 +203,17 @@ void FillTransformerInput(
 
   // trg_slf_attn_bias  [n,8,1,8]  float32
   auto trg_slf_attn_bias_tensor = predictor->GetInput(6);
-  std::vector<int64_t> trg_slf_attn_bias_dims{1, n_head, 1, n_head};
+  std::vector<int64_t> trg_slf_attn_bias_dims{n_head, n_head, 1, n_head};
   trg_slf_attn_bias_tensor->Resize(trg_slf_attn_bias_dims);
   auto trg_slf_attn_bias_data = trg_slf_attn_bias_tensor->mutable_data<float>();
   auto trg_slf_attn_bias_size = ShapeProduction(trg_slf_attn_bias_dims);
-  for (int i = 0; i < trg_slf_attn_bias_size; i++) {
-    trg_slf_attn_bias_data[i] = 0.f;
+  offset = 0;
+  for (int k = 0; k < n_head; k++) {
+    for (int j = 0; j < n_head; j++) {
+      for (int i = 0; i < n_head; i++) {
+        trg_slf_attn_bias_data[offset++] = (i <= k) ? 0.0f : -1e6f;
+      }
+    }
   }
 
   // trg_src_attn_bias  [n,8,1,c]  float32
@@ -219,9 +222,13 @@ void FillTransformerInput(
   trg_src_attn_bias_tensor->Resize(trg_src_attn_bias_dims);
   auto trg_src_attn_bias_data = trg_src_attn_bias_tensor->mutable_data<float>();
   auto trg_src_attn_bias_size = ShapeProduction(trg_src_attn_bias_dims);
-  for (int i = 0; i < trg_src_attn_bias_size / max_seq_len; i++) {
-    for (int j = 0; j < max_seq_len; j++) {
-      trg_src_attn_bias_data[i * max_seq_len + j] = src_slf_attn_bias_data[j];
+  offset = 0;
+  for (int j = 0; j < trg_src_attn_bias_size / max_seq_len; j++) {
+    for (int i = 0; i < seq_len; i++) {
+      trg_src_attn_bias_data[offset++] = 0.0f;
+    }
+    for (int i = seq_len; i < max_seq_len; i++) {
+      trg_src_attn_bias_data[offset++] = -1e6f;
     }
   }
 
@@ -232,8 +239,13 @@ void FillTransformerInput(
   auto kv_padding_selection_data =
       kv_padding_selection_tensor->mutable_data<float>();
   auto kv_padding_selection_size = ShapeProduction(kv_padding_selection_dims);
-  for (int i = 0; i < kv_padding_selection_size; i++) {
-    kv_padding_selection_data[i] = 0.f;
+  offset = 0;
+  for (int k = 0; k < n_head; k++) {
+    for (int j = 0; j < n_head; j++) {
+      for (int i = 0; i < n_head; i++) {
+        kv_padding_selection_data[offset++] = (i == k) ? 1.0f : 0.0f;
+      }
+    }
   }
 }
 
