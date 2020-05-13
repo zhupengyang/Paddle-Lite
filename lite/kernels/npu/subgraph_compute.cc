@@ -114,6 +114,22 @@ int SubgraphEngine::BuildDeviceProgram() {
   CHECK(!device_onames_.empty())
       << "[NPU] No output nodes found for building NPU model";
 
+  origin_itensors_.resize(device_inames_.size());
+  origin_idims_.resize(device_inames_.size());
+  for (int i = 0; i < device_inames_.size(); i++) {
+    auto node = graph.Get(device_inames_[i]);
+    auto precision = node->precision();
+    auto layout = node->layout();
+    origin_itensors_[i] = scope_->FindMutableTensor(device_inames_[i]);
+    CHECK(origin_itensors_[i]);
+    origin_idims_[i] = origin_itensors_[i]->dims();
+    VLOG(3) << "[NPU] Inputs[" << i << "] name: " << device_inames_[i]
+            << " precision: " << PrecisionToStr(precision)
+            << " layout: " << DataLayoutToStr(layout)
+            << " dims: " << origin_idims_[i];
+    // Prepare the device input tensors
+  }
+
   // Build the HiAI IR graph to HiAI om model as the device program
   if (device_program_map_.count(inputs_shape_) > 0) {
     return status;
