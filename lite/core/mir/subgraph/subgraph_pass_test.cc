@@ -104,6 +104,7 @@ void FillTransformerInput(
   int seq_len = input.size();
   int max_seq_len = 16;
   int n_head = 8;
+  int max_out_len = 8;
   // src_word pad value
   int64_t eos_idx = 1;
 
@@ -128,7 +129,7 @@ void FillTransformerInput(
     src_pos_data[i] = i;
   }
   for (int i = seq_len; i < max_seq_len - seq_len; i++) {
-    src_word_data[i] = 0;
+    src_pos_data[i] = 0;
   }
 
   // src_slf_attn_bias  [n,8,c,c]  float32 0; pad_value: -1e9
@@ -140,7 +141,7 @@ void FillTransformerInput(
   auto src_slf_attn_bias_size = ShapeProduction(src_slf_attn_bias_dims);
   int offset = 0;
   for (int j = 0; j < src_slf_attn_bias_size / max_seq_len; j++) {
-    for (int i = 0; i < max_seq_len; i++) {
+    for (int i = 0; i < seq_len; i++) {
       src_slf_attn_bias_data[offset++] = 0.0f;
     }
     for (int i = seq_len; i < max_seq_len; i++) {
@@ -201,16 +202,17 @@ void FillTransformerInput(
   init_idx_data[0] = 0;
 #endif
 
-  // trg_slf_attn_bias  [n,8,1,8]  float32
+  // trg_slf_attn_bias  [8,8,1,8]  float32
   auto trg_slf_attn_bias_tensor = predictor->GetInput(6);
-  std::vector<int64_t> trg_slf_attn_bias_dims{n_head, n_head, 1, n_head};
+  std::vector<int64_t> trg_slf_attn_bias_dims{
+      max_out_len, n_head, 1, max_out_len};
   trg_slf_attn_bias_tensor->Resize(trg_slf_attn_bias_dims);
   auto trg_slf_attn_bias_data = trg_slf_attn_bias_tensor->mutable_data<float>();
   auto trg_slf_attn_bias_size = ShapeProduction(trg_slf_attn_bias_dims);
   offset = 0;
-  for (int k = 0; k < n_head; k++) {
+  for (int k = 0; k < max_out_len; k++) {
     for (int j = 0; j < n_head; j++) {
-      for (int i = 0; i < n_head; i++) {
+      for (int i = 0; i < max_out_len; i++) {
         trg_slf_attn_bias_data[offset++] = (i <= k) ? 0.0f : -1e6f;
       }
     }
@@ -234,15 +236,16 @@ void FillTransformerInput(
 
   // kv_padding_selection  [8,8,8,1]  float32
   auto kv_padding_selection_tensor = predictor->GetInput(8);
-  std::vector<int64_t> kv_padding_selection_dims{n_head, n_head, n_head, 1};
+  std::vector<int64_t> kv_padding_selection_dims{
+      max_out_len, n_head, max_out_len, 1};
   kv_padding_selection_tensor->Resize(kv_padding_selection_dims);
   auto kv_padding_selection_data =
       kv_padding_selection_tensor->mutable_data<float>();
   auto kv_padding_selection_size = ShapeProduction(kv_padding_selection_dims);
   offset = 0;
-  for (int k = 0; k < n_head; k++) {
+  for (int k = 0; k < max_out_len; k++) {
     for (int j = 0; j < n_head; j++) {
-      for (int i = 0; i < n_head; i++) {
+      for (int i = 0; i < max_out_len; i++) {
         kv_padding_selection_data[offset++] = (i == k) ? 1.0f : 0.0f;
       }
     }
@@ -353,8 +356,8 @@ TEST(Subgraph, generate_model_and_check_precision) {
   auto output_tensor_type = TypeParsing(FLAGS_output_tensor_type);
   std::vector<lite_api::Place> valid_places({
 #ifdef LITE_WITH_ARM
-      lite_api::Place{TARGET(kARM), PRECISION(kInt64)},
       lite_api::Place{TARGET(kARM), PRECISION(kFloat)},
+      lite_api::Place{TARGET(kARM), PRECISION(kInt64)},
 #endif
   });
   // Generate and run optimized model on CPU as the reference predictor
@@ -368,7 +371,8 @@ TEST(Subgraph, generate_model_and_check_precision) {
 // Generate and run optimized model on NPU/XPU as the target predictor
 #if 1
 #ifdef LITE_WITH_NPU
-  valid_places.push_back(lite_api::Place{TARGET(kNPU)});
+  valid_places.push_back(lite_api::Place{TARGET(kNPU), PRECISION(kFloat)});
+  valid_places.push_back(lite_api::Place{TARGET(kNPU), PRECISION(kInt64)});
 #endif
   auto tar_predictor = TestModel(FLAGS_model_dir,
                                  FLAGS_model_file,

@@ -39,7 +39,7 @@ class SubgraphEngine : public subgraph::Engine {
                  std::string model_cache_dir = "")
       : subgraph::Engine(ctx,
                          block_idx,
-                         block_desc,
+                         program_desc,
                          input_names,
                          output_names,
                          scope,
