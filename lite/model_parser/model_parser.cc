@@ -764,7 +764,7 @@ void LoadModelNaive(const std::string &model_dir,
  *      topo_size:    length of `topo_data`.
  *      topo_data:    contains model's topology data.
  *      param_data:   contains model's params data.
-*/
+ */
 
 // usage: LoadModelNaiveFromFile is used for loading model from file.
 template <typename T>

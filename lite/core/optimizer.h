@@ -17,6 +17,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 #include "lite/core/mir/generate_program_pass.h"
 #include "lite/core/mir/pass_manager.h"
@@ -44,11 +45,16 @@ class Optimizer {
     program_ = &program;
     valid_places_ = valid_places;
     CHECK(!valid_places.empty()) << "At least one valid_place should be set";
-    CHECK(!graph_) << "duplicate optimize found";
+    CHECK(!graph_.size()) << "duplicate optimize found";
 
-    graph_.reset(new mir::SSAGraph);
-    graph_->Build(program, valid_places);
-    graph_->SetValidPlaces(valid_places);
+    auto block_size = program.ops().size();
+    for (int block_idx = 0; block_idx < block_size; block_idx++) {
+      std::unique_ptr<mir::SSAGraph> graph;
+      graph.reset(new mir::SSAGraph);
+      graph->Build(program, valid_places, block_idx);
+      graph->SetValidPlaces(valid_places);
+      graph_.emplace_back(std::move(graph));
+    }
 
     SpecifyKernelPickTactic(kernel_pick_factor);
     InitTargetTypeTransformPass();
@@ -76,12 +82,11 @@ class Optimizer {
     (defined LITE_WITH_ARM)
            "lite_elementwise_activation_fuse_pass",  //
 #endif
+           "identity_dropout_eliminate_pass",
            "__xpu__resnet_fuse_pass",
            "__xpu__multi_encoder_fuse_pass",
            "__xpu__embedding_with_eltwise_add_fuse_pass",
            "__xpu__fc_fuse_pass",
-           "identity_dropout_eliminate_pass",         // should be placed after
-                                                      // xpu fusion
            "quantized_op_attributes_inference_pass",  // Only for fully
                                                       // quantized model, infer
                                                       // the output scale and
@@ -160,14 +165,18 @@ class Optimizer {
   const lite::Scope* exec_scope() const { return exec_scope_; }
 
   // Generate a new program based on the mir graph.
-  std::unique_ptr<RuntimeProgram> GenRuntimeProgram() {
+  std::vector<std::unique_ptr<RuntimeProgram>> GenRuntimeProgram() {
     auto pass = mir::PassManager::Global().LookUp<mir::GenerateProgramPass>(
         "generate_program_pass");
-    pass->Apply(graph_);
-    auto program = pass->GenProgram();
-    CHECK(exec_scope_);
-    program->set_exec_scope(exec_scope_);
-    return program;
+    std::vector<std::unique_ptr<RuntimeProgram>> programs;
+    for (int block_idx = 0; block_idx < graph_.size(); block_idx++) {
+      pass->Apply(graph_[block_idx]);
+      auto program = pass->GenProgram();
+      CHECK(exec_scope_);
+      program->set_exec_scope(exec_scope_);
+      programs.emplace_back(std::move(program));
+    }
+    return programs;
   }
 
   void InitTargetTypeTransformPass() {
@@ -182,14 +191,14 @@ class Optimizer {
   // Generate C++ code which combines the inference program, model and weights.
   void GenCode(const std::string& code_dir);
 
-  const mir::SSAGraph& ssa_graph() const {
-    CHECK(graph_);
-    return *graph_;
+  const mir::SSAGraph& ssa_graph(int block_idx) const {
+    CHECK(graph_[block_idx]);
+    return *graph_[block_idx];
   }
 
-  mir::SSAGraph* mutable_ssa_graph() {
-    CHECK(graph_);
-    return graph_.get();
+  mir::SSAGraph* mutable_ssa_graph(int block_idx) {
+    CHECK(graph_[block_idx]);
+    return graph_[block_idx].get();
   }
 
   lite::Scope* exec_scope() { return exec_scope_; }
@@ -216,14 +225,16 @@ class Optimizer {
         LOG(INFO) << "   - Skip " << x
                   << " because the target or kernel does not match.";
       } else {
-        pass->Apply(graph_);
+        for (int block_idx = 0; block_idx < graph_.size(); block_idx++) {
+          pass->Apply(graph_[block_idx]);
+        }
         LOG(INFO) << "== Finished running: " << x;
       }
     }
   }
 
  private:
-  std::unique_ptr<mir::SSAGraph> graph_;
+  std::vector<std::unique_ptr<mir::SSAGraph>> graph_;
   std::vector<Place> valid_places_;
   lite::Scope* exec_scope_{};
   Program* program_{};
