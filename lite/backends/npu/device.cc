@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include "lite/backends/npu/device.h"
+#include <sys/time.h>
+#include <time.h>
 #include "lite/utils/cp_logging.h"
 #include "lite/utils/io.h"
 
@@ -68,10 +70,19 @@ std::shared_ptr<hiai::AiModelMngerClient> Device::Build(
   domi::HiaiIrBuild ir_build;
   domi::ModelBufferData om_model_buf;
 
+  auto GetCurrentUS = []() -> double {
+    struct timeval time;
+    gettimeofday(&time, NULL);
+    return 1e+6 * time.tv_sec + time.tv_usec;
+  };
   if (!model_cache_full_dir.empty() && IsFileExists(model_cache_full_dir)) {
     VLOG(3) << "Will read om model from " << model_cache_full_dir;
+    auto start_time = GetCurrentUS();
     ReadFromOMFile(&om_model_buf, model_cache_full_dir);
+    LOG(INFO) << "[NPU] read om model cost " << GetCurrentUS() - start_time
+              << " us";
   } else {
+    auto start_time = GetCurrentUS();
     if (!ir_build.CreateModelBuff(om_model, om_model_buf)) {
       LOG(WARNING) << "[NPU] CreateModelBuff failed!";
       return nullptr;
@@ -81,6 +92,8 @@ std::shared_ptr<hiai::AiModelMngerClient> Device::Build(
       ir_build.ReleaseModelBuff(om_model_buf);
       return nullptr;
     }
+    LOG(INFO) << "[NPU] create om model cost " << GetCurrentUS() - start_time
+              << " us";
     if (!model_cache_full_dir.empty()) {
       VLOG(3) << "Will write om model to " << model_cache_full_dir;
       WriteToOMFile(om_model_buf, model_cache_full_dir);
