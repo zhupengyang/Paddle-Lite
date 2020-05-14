@@ -339,7 +339,7 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
 
   predictor = lite_api::CreatePaddlePredictor(cxx_config);
   predictor->SaveOptimizedModel(optimized_model_dir,
-                                lite_api::LiteModelType::kNaiveBuffer);
+                                lite_api::LiteModelType::kProtobuf);
   return predictor;
 }
 
