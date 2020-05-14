@@ -15,6 +15,7 @@
 #include "lite/core/mir/subgraph/subgraph_detector.h"
 #include <memory>
 #include <set>
+#include <string>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -29,6 +30,19 @@
 namespace paddle {
 namespace lite {
 namespace mir {
+
+std::vector<std::string> vv2string(std::vector<std::vector<int64_t>> in) {
+  std::vector<std::string> ret{};
+  for (auto v : in) {
+    std::string tmp = "";
+    for (auto i : v) {
+      tmp += std::to_string(i) + ",";
+    }
+    tmp.pop_back();
+    ret.push_back(tmp);
+  }
+  return ret;
+}
 
 std::string SubgraphVisualizer::operator()() {
   Dot dot;
@@ -454,6 +468,15 @@ void SubgraphFuser::InsertNewNode(SSAGraph *graph,
   subgraph_op_desc.SetAttr<std::vector<std::string>>("output_data_names",
                                                      output_var_names);
 
+  if (NPUContext::i_map.count(input_var_names) > 0) {
+    subgraph_op_desc.SetAttr<std::vector<std::string>>(
+        "in_shapes", vv2string(NPUContext::i_map[input_var_names]));
+  }
+  if (NPUContext::o_map.count(output_var_names) > 0) {
+    subgraph_op_desc.SetAttr<std::vector<std::string>>(
+        "out_shapes", vv2string(NPUContext::o_map[output_var_names]));
+  }
+
   // Set input/output scale values of input/output var nodes for
   // type_precision_cast_pass.
   std::vector<float> input_data_scales;
@@ -530,6 +553,11 @@ void SubgraphFuser::InsertNewNode(SSAGraph *graph,
                                output_var_nodes,
                                local_var_nodes,
                                unused_var_nodes});
+  if (NPUContext::i_map.count(input_var_names) > 0) {
+    nodes2rm.insert(weight_var_nodes.begin(), weight_var_nodes.end());
+    nodes2rm.insert(local_var_nodes.begin(), local_var_nodes.end());
+    nodes2rm.insert(unused_var_nodes.begin(), unused_var_nodes.end());
+  }
   GraphSafeRemoveNodes(graph, nodes2rm);
 }
 

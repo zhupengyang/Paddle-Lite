@@ -66,6 +66,8 @@ class SubgraphEngine : public subgraph::Engine {
 
   std::string GenerateModelCacheName() const;
 
+  void SaveIOInfo();
+
   std::string model_name_{"model.om"};
   std::vector<std::vector<int64_t>> inputs_shape_{};
   std::map<std::vector<std::vector<int64_t>>, std::shared_ptr<device_program_t>>

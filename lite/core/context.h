@@ -95,6 +95,12 @@ class Context<TargetType::kNPU> {
 
  private:
   static std::string subgraph_model_cache_dir_;
+
+ public:
+  static std::map<std::vector<std::string>, std::vector<std::vector<int64_t>>>
+      i_map;
+  static std::map<std::vector<std::string>, std::vector<std::vector<int64_t>>>
+      o_map;
 };
 #endif
 

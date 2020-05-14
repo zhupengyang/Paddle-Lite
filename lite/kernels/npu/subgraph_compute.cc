@@ -30,6 +30,27 @@ namespace lite {
 namespace kernels {
 namespace npu {
 
+void SubgraphEngine::SaveIOInfo() {
+  auto device_program = device_program_map_[inputs_shape_];
+
+  auto inames = device_inames_;
+  auto idims = device_program->origin_idims;
+  auto onames = device_onames_;
+  auto odims = device_program->origin_odims;
+
+  std::vector<std::vector<int64_t>> tmp_idims;
+  for (auto i : idims) {
+    tmp_idims.push_back(i.Vectorize());
+  }
+  NPUContext::i_map[inames] = tmp_idims;
+
+  std::vector<std::vector<int64_t>> tmp_odims;
+  for (auto i : odims) {
+    tmp_odims.push_back(i.Vectorize());
+  }
+  NPUContext::o_map[onames] = tmp_odims;
+}
+
 std::string SubgraphEngine::GenerateModelCacheName() const {
   auto inames = device_inames_;
   auto onames = device_onames_;
@@ -229,6 +250,7 @@ int SubgraphEngine::BuildDeviceProgram() {
     device_otensors_[i].reset(new hiai::AiTensor);
     device_otensors_[i]->Init(&(device_odims[i]));
   }
+  SaveIOInfo();
   return status;
 }
 
