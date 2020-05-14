@@ -42,7 +42,7 @@ static void MkDirRecur(const std::string& path) {
     LOG(ERROR) << "Cann't mkdir " << path;
   }
 #else  // On ARM
-  CHECK_NE(mkdir(path.c_str(), S_IRWXU), -1) << "Cann't mkdir " << path;
+// CHECK_NE(mkdir(path.c_str(), S_IRWXU), -1) << "Cann't mkdir " << path;
 #endif
 }
 

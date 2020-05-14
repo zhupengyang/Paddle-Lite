@@ -15,9 +15,11 @@
 #include "lite/core/mir/subgraph/subgraph_detector.h"
 #include <memory>
 #include <set>
+#include <string>
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include "lite/core/context.h"
 #include "lite/core/mir/dot.h"
 #include "lite/core/mir/pass_registry.h"
 #include "lite/core/mir/pattern_matcher.h"
@@ -29,6 +31,19 @@
 namespace paddle {
 namespace lite {
 namespace mir {
+
+std::vector<std::string> vv2string(std::vector<std::vector<int64_t>> in) {
+  std::vector<std::string> ret{};
+  for (auto v : in) {
+    std::string tmp = "";
+    for (auto i : v) {
+      tmp += std::to_string(i) + ",";
+    }
+    tmp.pop_back();
+    ret.push_back(tmp);
+  }
+  return ret;
+}
 
 std::string SubgraphVisualizer::operator()() {
   Dot dot;
@@ -454,6 +469,16 @@ void SubgraphFuser::InsertNewNode(SSAGraph *graph,
   subgraph_op_desc.SetAttr<std::vector<std::string>>("output_data_names",
                                                      output_var_names);
 
+  auto real_inames = input_var_names;
+  if (NPUContext::i_map.count(input_var_names) > 0) {
+    subgraph_op_desc.SetAttr<std::vector<std::string>>(
+        "in_shapes", vv2string(NPUContext::i_map[input_var_names]));
+  }
+  if (NPUContext::o_map.count(output_var_names) > 0) {
+    subgraph_op_desc.SetAttr<std::vector<std::string>>(
+        "out_shapes", vv2string(NPUContext::o_map[output_var_names]));
+  }
+
   // Set input/output scale values of input/output var nodes for
   // type_precision_cast_pass.
   std::vector<float> input_data_scales;
@@ -525,11 +550,23 @@ void SubgraphFuser::InsertNewNode(SSAGraph *graph,
 
   // Remove subgraph nodes and unused var nodes
   auto nodes2rm = GetNodes2RM(subgraph_nodes,
-                              {input_var_nodes,
-                               weight_var_nodes,
-                               output_var_nodes,
-                               local_var_nodes,
-                               unused_var_nodes});
+                              {
+                                  input_var_nodes,
+                                  // weight_var_nodes,
+                                  output_var_nodes,
+                                  // local_var_nodes,
+                                  // unused_var_nodes,
+                              });
+
+  if (NPUContext::i_map.count(real_inames) > 0) {
+    LOG(INFO) << "--- 1";
+    for (auto i : nodes2rm) {
+      if (!i->IsArg()) continue;
+      NPUContext::vars2remove.push_back(i->arg()->name);
+    }
+  }
+  LOG(INFO) << "--- nodes2rm: " << nodes2rm.size();
+
   GraphSafeRemoveNodes(graph, nodes2rm);
 }
 
@@ -545,6 +582,7 @@ void SubgraphFuser::ReplaceNodesWithSubgraphs(SSAGraph *graph,
       InsertNewNode(graph, subgraph_idx, subgraphs[subgraph_idx]);
     }
   }
+  SubgraphVisualizer(graph, {})();
 }
 
 void SubgraphFuser::operator()() {
