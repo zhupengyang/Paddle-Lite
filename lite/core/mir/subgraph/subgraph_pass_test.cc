@@ -338,7 +338,7 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
   }
 
   predictor = lite_api::CreatePaddlePredictor(cxx_config);
-  predictor->SaveOptimizedModel(optimized_model_dir,
+  predictor->SaveOptimizedModel("/data/local/tmp/zpy/pb_model/",
                                 lite_api::LiteModelType::kProtobuf);
   return predictor;
 }

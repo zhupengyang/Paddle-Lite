@@ -468,6 +468,7 @@ void SubgraphFuser::InsertNewNode(SSAGraph *graph,
   subgraph_op_desc.SetAttr<std::vector<std::string>>("output_data_names",
                                                      output_var_names);
 
+  auto real_inames = input_var_names;
   if (NPUContext::i_map.count(input_var_names) > 0) {
     subgraph_op_desc.SetAttr<std::vector<std::string>>(
         "in_shapes", vv2string(NPUContext::i_map[input_var_names]));
@@ -553,11 +554,19 @@ void SubgraphFuser::InsertNewNode(SSAGraph *graph,
                                output_var_nodes,
                                local_var_nodes,
                                unused_var_nodes});
-  if (NPUContext::i_map.count(input_var_names) > 0) {
+  LOG(INFO) << "--- input_var_nodes: " << input_var_nodes.size();
+  LOG(INFO) << "--- weight_var_nodes: " << weight_var_nodes.size();
+  LOG(INFO) << "--- output_var_nodes: " << output_var_nodes.size();
+  LOG(INFO) << "--- local_var_nodes: " << local_var_nodes.size();
+  LOG(INFO) << "--- unused_var_nodes: " << unused_var_nodes.size();
+
+  if (NPUContext::i_map.count(real_inames) > 0) {
+    LOG(INFO) << "--- 1";
     nodes2rm.insert(weight_var_nodes.begin(), weight_var_nodes.end());
     nodes2rm.insert(local_var_nodes.begin(), local_var_nodes.end());
     nodes2rm.insert(unused_var_nodes.begin(), unused_var_nodes.end());
   }
+  LOG(INFO) << "--- nodes2rm: " << nodes2rm.size();
   GraphSafeRemoveNodes(graph, nodes2rm);
 }
 
@@ -573,6 +582,7 @@ void SubgraphFuser::ReplaceNodesWithSubgraphs(SSAGraph *graph,
       InsertNewNode(graph, subgraph_idx, subgraphs[subgraph_idx]);
     }
   }
+  SubgraphVisualizer(graph, {})();
 }
 
 void SubgraphFuser::operator()() {
