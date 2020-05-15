@@ -321,8 +321,8 @@ void SaveCombinedParamsPb(const std::string &path,
   for (size_t i = 0; i < main_block_desc.VarsSize(); ++i) {
     auto &var = *main_block_desc.GetVar<cpp::VarDesc>(i);
     bool need_rm = std::find(NPUContext::vars2remove.begin(),
-                             NPUContext::vars2remove.end()) !=
-                   NPUContext::vars2remove.end();
+                             NPUContext::vars2remove.end(),
+                             var.Name()) != NPUContext::vars2remove.end();
     if (!IsPersistable(var) || unique_var_names.count(var.Name()) > 0 ||
         need_rm)
       continue;
@@ -542,8 +542,8 @@ void SaveCombinedParamsNaive(const std::string &path,
   for (size_t i = 0; i < main_block_desc.VarsSize(); ++i) {
     auto &var = *main_block_desc.GetVar<cpp::VarDesc>(i);
     bool need_rm = std::find(NPUContext::vars2remove.begin(),
-                             NPUContext::vars2remove.end()) !=
-                   NPUContext::vars2remove.end();
+                             NPUContext::vars2remove.end(),
+                             var.Name()) != NPUContext::vars2remove.end();
     if (var.Name() == "feed" || var.Name() == "fetch" || !var.Persistable() ||
         unique_var_names.count(var.Name()) > 0 || need_rm)
       continue;

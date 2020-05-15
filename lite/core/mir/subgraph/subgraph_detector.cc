@@ -470,6 +470,14 @@ void SubgraphFuser::InsertNewNode(SSAGraph *graph,
                                                      output_var_names);
 
   auto real_inames = input_var_names;
+  for (auto i : input_var_names) {
+    LOG(INFO) << "--- input_var_names: " << i;
+  }
+  for (auto i : NPUContext::i_map) {
+    for (auto j : i.first) {
+      LOG(INFO) << "--- i_map: " << j;
+    }
+  }
   if (NPUContext::i_map.count(input_var_names) > 0) {
     subgraph_op_desc.SetAttr<std::vector<std::string>>(
         "in_shapes", vv2string(NPUContext::i_map[input_var_names]));
@@ -560,8 +568,9 @@ void SubgraphFuser::InsertNewNode(SSAGraph *graph,
 
   if (NPUContext::i_map.count(real_inames) > 0) {
     LOG(INFO) << "--- 1";
-    for (auto i : nodes2rm) {
-      NPUContext::vars2remove.push_back(i->name);
+    for (auto *i : nodes2rm) {
+      if (!i->IsArg()) continue;
+      NPUContext::vars2remove.push_back(i->arg()->name);
     }
   }
   LOG(INFO) << "--- nodes2rm: " << nodes2rm.size();

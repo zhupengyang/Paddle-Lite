@@ -363,7 +363,8 @@ TEST(Subgraph, generate_model_and_check_precision) {
       lite_api::Place{TARGET(kARM), PRECISION(kInt64)},
 #endif
   });
-  // Generate and run optimized model on CPU as the reference predictor
+// Generate and run optimized model on CPU as the reference predictor
+/*
   auto ref_predictor = TestModel(FLAGS_model_dir,
                                  FLAGS_model_file,
                                  FLAGS_params_file,
@@ -371,6 +372,7 @@ TEST(Subgraph, generate_model_and_check_precision) {
                                  input_tensor_shape,
                                  input_tensor_type,
                                  FLAGS_optimized_model_dir + "_ref_opt_model");
+*/
 // Generate and run optimized model on NPU/XPU as the target predictor
 #if 1
 #ifdef LITE_WITH_NPU
