@@ -36,14 +36,18 @@ class SubgraphEngine : public subgraph::Engine {
                  const std::vector<std::string> &input_names,
                  const std::vector<std::string> &output_names,
                  Scope *scope,
-                 std::string model_cache_dir = "")
+                 std::string model_cache_dir = "",
+                 std::vector<DDim> input_dims = {},
+                 std::vector<DDim> output_dims = {})
       : subgraph::Engine(ctx,
                          block_idx,
                          program_desc,
                          input_names,
                          output_names,
                          scope,
-                         model_cache_dir) {}
+                         model_cache_dir,
+                         input_dims,
+                         output_dims) {}
 
   struct device_program_t {
     explicit device_program_t(std::shared_ptr<hiai::AiModelMngerClient> _client)
@@ -67,6 +71,8 @@ class SubgraphEngine : public subgraph::Engine {
   std::string GenerateModelCacheName() const;
 
   void SaveIOInfo();
+
+  int BuildDeviceProgramOffline();
 
   std::string model_name_{"model.om"};
   std::vector<std::vector<int64_t>> inputs_shape_{};

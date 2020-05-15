@@ -299,8 +299,9 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
   cxx_config.set_param_file(params_file);
   cxx_config.set_valid_places(valid_places);
   auto predictor = lite_api::CreatePaddlePredictor(cxx_config);
-  predictor->SaveOptimizedModel(optimized_model_dir,
-                                lite_api::LiteModelType::kNaiveBuffer);
+  // predictor->SaveOptimizedModel(optimized_model_dir,
+  //                               lite_api::LiteModelType::kNaiveBuffer);
+
   // Load optimized model
   lite_api::MobileConfig mobile_config;
   mobile_config.set_model_from_file(optimized_model_dir + ".nb");
@@ -337,9 +338,9 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
     }
   }
 
-  predictor = lite_api::CreatePaddlePredictor(cxx_config);
-  predictor->SaveOptimizedModel("/data/local/tmp/zpy/pb_model/",
-                                lite_api::LiteModelType::kProtobuf);
+  // predictor = lite_api::CreatePaddlePredictor(cxx_config);
+  // predictor->SaveOptimizedModel("/data/local/tmp/zpy/pb_model/",
+  //                               lite_api::LiteModelType::kProtobuf);
   return predictor;
 }
 
