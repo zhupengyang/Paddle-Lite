@@ -370,7 +370,7 @@ TEST(Subgraph, generate_model_and_check_precision) {
                                  input_tensor_type,
                                  FLAGS_optimized_model_dir + "_ref_opt_model");
 // Generate and run optimized model on NPU/XPU as the target predictor
-#if 1
+#if 0
 #ifdef LITE_WITH_NPU
   valid_places.push_back(lite_api::Place{TARGET(kNPU), PRECISION(kFloat)});
   valid_places.push_back(lite_api::Place{TARGET(kNPU), PRECISION(kInt64)});
