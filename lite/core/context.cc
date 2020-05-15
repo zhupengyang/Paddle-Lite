@@ -24,6 +24,7 @@ std::map<std::vector<std::string>, std::vector<std::vector<int64_t>>>
 std::map<std::vector<std::string>, std::vector<std::vector<int64_t>>>
     Context<TargetType::kNPU>::o_map{};
 std::vector<std::string> Context<TargetType::kNPU>::vars2remove{};
+bool Context<TargetType::kNPU>::is_pruned_model{"false"};
 #endif
 
 #ifdef LITE_WITH_XPU
