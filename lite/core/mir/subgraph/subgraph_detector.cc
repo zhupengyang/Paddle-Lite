@@ -19,6 +19,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include "lite/core/context.h"
 #include "lite/core/mir/dot.h"
 #include "lite/core/mir/pass_registry.h"
 #include "lite/core/mir/pattern_matcher.h"
@@ -549,24 +550,22 @@ void SubgraphFuser::InsertNewNode(SSAGraph *graph,
 
   // Remove subgraph nodes and unused var nodes
   auto nodes2rm = GetNodes2RM(subgraph_nodes,
-                              {input_var_nodes,
-                               weight_var_nodes,
-                               output_var_nodes,
-                               local_var_nodes,
-                               unused_var_nodes});
-  LOG(INFO) << "--- input_var_nodes: " << input_var_nodes.size();
-  LOG(INFO) << "--- weight_var_nodes: " << weight_var_nodes.size();
-  LOG(INFO) << "--- output_var_nodes: " << output_var_nodes.size();
-  LOG(INFO) << "--- local_var_nodes: " << local_var_nodes.size();
-  LOG(INFO) << "--- unused_var_nodes: " << unused_var_nodes.size();
+                              {
+                                  input_var_nodes,
+                                  // weight_var_nodes,
+                                  output_var_nodes,
+                                  // local_var_nodes,
+                                  // unused_var_nodes,
+                              });
 
   if (NPUContext::i_map.count(real_inames) > 0) {
     LOG(INFO) << "--- 1";
-    nodes2rm.insert(weight_var_nodes.begin(), weight_var_nodes.end());
-    nodes2rm.insert(local_var_nodes.begin(), local_var_nodes.end());
-    nodes2rm.insert(unused_var_nodes.begin(), unused_var_nodes.end());
+    for (auto i : nodes2rm) {
+      NPUContext::vars2remove.push_back(i->name);
+    }
   }
   LOG(INFO) << "--- nodes2rm: " << nodes2rm.size();
+
   GraphSafeRemoveNodes(graph, nodes2rm);
 }
 

@@ -18,6 +18,7 @@
 #include <limits>
 #include <set>
 #include <unordered_set>
+#include "lite/core/context.h"
 #include "lite/core/scope.h"
 #include "lite/core/tensor.h"
 #include "lite/core/variable.h"
@@ -316,10 +317,17 @@ void SaveCombinedParamsPb(const std::string &path,
 
   // Get vars
   std::vector<std::string> paramlist;
+  std::unordered_set<std::string> unique_var_names;
   for (size_t i = 0; i < main_block_desc.VarsSize(); ++i) {
     auto &var = *main_block_desc.GetVar<cpp::VarDesc>(i);
-    if (!IsPersistable(var)) continue;
+    bool need_rm = std::find(NPUContext::vars2remove.begin(),
+                             NPUContext::vars2remove.end()) !=
+                   NPUContext::vars2remove.end();
+    if (!IsPersistable(var) || unique_var_names.count(var.Name()) > 0 ||
+        need_rm)
+      continue;
     paramlist.push_back(var.Name());
+    unique_var_names.emplace(var.Name());
   }
   std::sort(paramlist.begin(), paramlist.end());
 
@@ -533,8 +541,11 @@ void SaveCombinedParamsNaive(const std::string &path,
   std::unordered_set<std::string> unique_var_names;
   for (size_t i = 0; i < main_block_desc.VarsSize(); ++i) {
     auto &var = *main_block_desc.GetVar<cpp::VarDesc>(i);
+    bool need_rm = std::find(NPUContext::vars2remove.begin(),
+                             NPUContext::vars2remove.end()) !=
+                   NPUContext::vars2remove.end();
     if (var.Name() == "feed" || var.Name() == "fetch" || !var.Persistable() ||
-        unique_var_names.count(var.Name()) > 0)
+        unique_var_names.count(var.Name()) > 0 || need_rm)
       continue;
     naive_buffer::ParamDesc param_desc(desc.AddParam());
     SetParamInfoNaive(&param_desc, exec_scope, var.Name());

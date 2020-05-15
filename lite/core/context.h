@@ -101,6 +101,7 @@ class Context<TargetType::kNPU> {
       i_map;
   static std::map<std::vector<std::string>, std::vector<std::vector<int64_t>>>
       o_map;
+  static std::vector<std::string> vars2remove;
 };
 #endif
 

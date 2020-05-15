@@ -23,6 +23,7 @@ std::map<std::vector<std::string>, std::vector<std::vector<int64_t>>>
     Context<TargetType::kNPU>::i_map{};
 std::map<std::vector<std::string>, std::vector<std::vector<int64_t>>>
     Context<TargetType::kNPU>::o_map{};
+std::vector<std::string> Context<TargetType::kNPU>::vars2remove{};
 #endif
 
 #ifdef LITE_WITH_XPU
