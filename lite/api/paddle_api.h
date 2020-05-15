@@ -140,12 +140,7 @@ class LITE_API ConfigBase {
   const std::string& subgraph_model_cache_dir() const {
     return subgraph_model_cache_dir_;
   }
-  void set_is_pruned_model(bool is_pruned_model) {
-    is_pruned_model_ = is_pruned_model;
-#ifdef LITE_WITH_NPU
-    NPUContext::is_pruned_model = is_pruned_model;
-#endif
-  }
+  void set_is_pruned_model(bool is_pruned_model);
   bool is_pruned_model() { return is_pruned_model_; }
 };
 

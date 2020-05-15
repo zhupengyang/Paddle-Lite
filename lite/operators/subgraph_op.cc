@@ -50,7 +50,7 @@ bool SubgraphOp::AttachImpl(const cpp::OpDesc& op_desc, lite::Scope* scope) {
         op_desc.GetAttr<std::vector<std::string>>("in_shapes");
     for (auto i : ishapes) {
       std::vector<int64_t> shape;
-      for (j : Split(i, ",")) {
+      for (auto j : Split(i, ",")) {
         shape.push_back(atoi(j.c_str()));
       }
       param_.input_dims.push_back(DDim(shape));
@@ -62,7 +62,7 @@ bool SubgraphOp::AttachImpl(const cpp::OpDesc& op_desc, lite::Scope* scope) {
         op_desc.GetAttr<std::vector<std::string>>("out_shapes");
     for (auto i : oshapes) {
       std::vector<int64_t> shape;
-      for (j : Split(i, ",")) {
+      for (auto j : Split(i, ",")) {
         shape.push_back(atoi(j.c_str()));
       }
       param_.output_dims.push_back(DDim(shape));

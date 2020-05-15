@@ -43,9 +43,9 @@ class Engine {
         input_names_(input_names),
         output_names_(output_names),
         scope_(scope),
-        model_cache_dir_(model_cache_dir,
-                         origin_idims_(input_dims),
-                         origin_odims_(output_dims)) {}
+        model_cache_dir_(model_cache_dir),
+        origin_idims_(input_dims),
+        origin_odims_(output_dims) {}
 
   virtual ~Engine() = default;
 

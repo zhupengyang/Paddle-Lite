@@ -218,6 +218,13 @@ void ConfigBase::set_threads(int threads) {
 #endif
 }
 
+void ConfigBase::set_is_pruned_model(bool is_pruned_model) {
+  is_pruned_model_ = is_pruned_model;
+#ifdef LITE_WITH_NPU
+  lite::NPUContext::is_pruned_model = is_pruned_model;
+#endif
+}
+
 #ifdef LITE_WITH_MLU
 void CxxConfig::set_mlu_core_version(lite_api::MLUCoreVersion core_version) {
   mlu_core_version_ = core_version;
