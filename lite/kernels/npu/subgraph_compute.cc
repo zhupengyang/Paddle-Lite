@@ -418,30 +418,6 @@ int SubgraphEngine::LaunchDeviceProgram() {
   return 0;
 }
 
-int SubgraphEngine::LaunchDeviceProgram() {
-  // Copy the data of origin input tensors to the buffer of input HiAI tensors
-  // init device_itensors_, device_otensors_, origin_otensors_
-  auto device_program = device_program_map_[inputs_shape_];
-
-  // Run the HiAI model by name
-  std::string key = "model_name";  // Note: key seems must be model_name
-  hiai::AiContext model_context;
-  model_context.AddPara(key, model_name_);
-  auto GetCurrentUS = []() -> double {
-    struct timeval time;
-    gettimeofday(&time, NULL);
-    return 1e+6 * time.tv_sec + time.tv_usec;
-  };
-  int istamp;
-  auto start_time = GetCurrentUS();
-  CHECK_EQ(device_program->client->Process(
-               model_context, device_itensors_, device_otensors_, 1000, istamp),
-           hiai::AI_SUCCESS);
-  VLOG(3) << "[NPU] Process cost " << GetCurrentUS() - start_time << " us";
-
-  return 0;
-}
-
 int SubgraphEngine::Build() {
   if (device_program_map_.count(inputs_shape_) > 0) {
     return subgraph::SUCCESS;

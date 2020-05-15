@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "lite/core/context.h"
 #include "paddle_place.h"  // NOLINT
 
 namespace paddle {
@@ -143,7 +144,7 @@ class LITE_API ConfigBase {
   void set_is_pruned_model(bool is_pruned_model) {
     is_pruned_model_ = is_pruned_model;
 #ifdef LITE_WITH_NPU
-    NPUContext::is_pruned_model = is_pruned_model;
+    lite::NPUContext::is_pruned_model = is_pruned_model;
 #endif
   }
   bool is_pruned_model() { return is_pruned_model_; }

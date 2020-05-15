@@ -308,34 +308,38 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
   mobile_config.set_power_mode(lite_api::PowerMode::LITE_POWER_HIGH);
   mobile_config.set_threads(1);
   mobile_config.set_subgraph_model_cache_dir(FLAGS_subgraph_model_cache_dir);
+  mobile_config.set_is_pruned_model(true);
   predictor = lite_api::CreatePaddlePredictor(mobile_config);
   std::vector<std::vector<int64_t>> inputs{};
   ReadInputFromFile(FLAGS_input_file, &inputs);
-  FillTransformerInput(predictor, inputs, 0);
+  // FillTransformerInput(predictor, inputs, 0);
   // Run optimized model
   for (int i = 0; i < FLAGS_warmup; i++) {
-    FillTransformerInput(predictor, inputs, 0);
+    // FillTransformerInput(predictor, inputs, 0);
     predictor->Run();
   }
   for (int i = 0; i < FLAGS_repeats; i++) {
-    FillTransformerInput(predictor, inputs, i);
+    // FillTransformerInput(predictor, inputs, i);
+    FillInputTensors(predictor, input_tensor_shape, input_tensor_type, 1);
     auto start = GetCurrentUS();
     predictor->Run();
     LOG(INFO) << i << ", " << GetCurrentUS() - start << "us";
 
-    auto out_tensor_0 = predictor->GetOutput(0);
-    auto out_data_0 = out_tensor_0->data<int64_t>();
-    auto out_size_0 = ShapeProduction(out_tensor_0->shape());
-    for (int i = 0; i < out_size_0; i++) {
-      LOG(INFO) << "-- out_0: " << out_data_0[i];
-    }
+    /*
+        auto out_tensor_0 = predictor->GetOutput(0);
+        auto out_data_0 = out_tensor_0->data<int64_t>();
+        auto out_size_0 = ShapeProduction(out_tensor_0->shape());
+        for (int i = 0; i < out_size_0; i++) {
+          LOG(INFO) << "-- out_0: " << out_data_0[i];
+        }
 
-    auto out_tensor_1 = predictor->GetOutput(1);
-    auto out_data_1 = out_tensor_1->data<float>();
-    auto out_size_1 = ShapeProduction(out_tensor_1->shape());
-    for (int i = 0; i < out_size_1; i++) {
-      LOG(INFO) << "-- out_1: " << out_data_1[i];
-    }
+        auto out_tensor_1 = predictor->GetOutput(1);
+        auto out_data_1 = out_tensor_1->data<float>();
+        auto out_size_1 = ShapeProduction(out_tensor_1->shape());
+        for (int i = 0; i < out_size_1; i++) {
+          LOG(INFO) << "-- out_1: " << out_data_1[i];
+        }
+    */
   }
 
   return predictor;
@@ -361,7 +365,8 @@ TEST(Subgraph, generate_model_and_check_precision) {
       lite_api::Place{TARGET(kARM), PRECISION(kInt64)},
 #endif
   });
-  // Generate and run optimized model on CPU as the reference predictor
+// Generate and run optimized model on CPU as the reference predictor
+/*
   auto ref_predictor = TestModel(FLAGS_model_dir,
                                  FLAGS_model_file,
                                  FLAGS_params_file,
@@ -369,6 +374,7 @@ TEST(Subgraph, generate_model_and_check_precision) {
                                  input_tensor_shape,
                                  input_tensor_type,
                                  FLAGS_optimized_model_dir + "_ref_opt_model");
+*/
 // Generate and run optimized model on NPU/XPU as the target predictor
 #if 1
 #ifdef LITE_WITH_NPU
