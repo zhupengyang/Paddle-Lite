@@ -15,6 +15,7 @@
 #include "lite/operators/subgraph_op.h"
 #include <utility>
 #include "lite/core/op_registry.h"
+#include "lite/utils/string.h"
 
 namespace paddle {
 namespace lite {
@@ -43,6 +44,31 @@ bool SubgraphOp::AttachImpl(const cpp::OpDesc& op_desc, lite::Scope* scope) {
   param_.block_idx = op_desc.GetAttr<int32_t>("sub_block");
   param_.scope = scope;
   CHECK(param_.scope);
+
+  if (op_desc.HasAttr("in_shapes")) {
+    std::vector<std::string> ishapes =
+        op_desc.GetAttr<std::vector<std::string>>("in_shapes");
+    for (auto i : ishapes) {
+      std::vector<int64_t> shape;
+      for (j : Split(i, ",")) {
+        shape.push_back(atoi(j.c_str()));
+      }
+      param_.input_dims.push_back(DDim(shape));
+    }
+  }
+
+  if (op_desc.HasAttr("out_shapes")) {
+    std::vector<std::string> oshapes =
+        op_desc.GetAttr<std::vector<std::string>>("out_shapes");
+    for (auto i : oshapes) {
+      std::vector<int64_t> shape;
+      for (j : Split(i, ",")) {
+        shape.push_back(atoi(j.c_str()));
+      }
+      param_.output_dims.push_back(DDim(shape));
+    }
+  }
+
   return true;
 }
 

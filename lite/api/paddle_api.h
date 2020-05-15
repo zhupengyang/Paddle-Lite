@@ -120,6 +120,7 @@ class LITE_API ConfigBase {
   PowerMode mode_{LITE_POWER_NO_BIND};
   // to save subgraph model for npu/xpu/...
   std::string subgraph_model_cache_dir_{""};
+  bool is_pruned_model_ = false;
 
  public:
   explicit ConfigBase(PowerMode mode = LITE_POWER_NO_BIND, int threads = 1);
@@ -139,6 +140,13 @@ class LITE_API ConfigBase {
   const std::string& subgraph_model_cache_dir() const {
     return subgraph_model_cache_dir_;
   }
+  void set_is_pruned_model(bool is_pruned_model) {
+    is_pruned_model_ = is_pruned_model;
+#ifdef LITE_WITH_NPU
+    NPUContext::is_pruned_model = is_pruned_model;
+#endif
+  }
+  bool is_pruned_model() { return is_pruned_model_; }
 };
 
 /// CxxConfig is the config for the Full feature predictor.

@@ -254,6 +254,170 @@ int SubgraphEngine::BuildDeviceProgram() {
   return status;
 }
 
+int SubgraphEngine::BuildDeviceProgramOffline() {
+  int status = 0;
+  // Convert all of ops and their input vars and weights and added into the NPU
+  // HiAI IR graph
+  subgraph::npu::Graph graph;
+
+  // Collect the valid input and output nodes in the HiAI IR graph and update
+  // the input and output names
+  device_inames_.clear();
+  device_onames_.clear();
+  std::vector<ge::Operator> device_inodes;
+  std::vector<ge::Operator> device_onodes;
+  device_inames_ = input_names_;
+  device_onames_ = output_names_;
+  CHECK(!device_inames_.empty())
+      << "[NPU] No input nodes found for building NPU model";
+  CHECK(!device_onames_.empty())
+      << "[NPU] No output nodes found for building NPU model";
+
+  origin_itensors_.resize(device_inames_.size());
+  origin_idims_.resize(device_inames_.size());
+  for (int i = 0; i < device_inames_.size(); i++) {
+    origin_itensors_[i] = scope_->FindMutableTensor(device_inames_[i]);
+    CHECK(origin_itensors_[i]);
+    origin_idims_[i] = origin_itensors_[i]->dims();
+    VLOG(3) << "[NPU] Inputs[" << i << "] name: " << device_inames_[i]
+            << " dims: " << origin_idims_[i];
+  }
+
+  // Build the HiAI IR graph to HiAI om model as the device program
+  if (device_program_map_.count(inputs_shape_) > 0) {
+    return status;
+  }
+  std::string model_cache_full_dir =
+      model_cache_dir_.empty() ? "" : model_cache_dir_ + "/" +
+                                          GenerateModelCacheName();
+  auto device_client = lite::npu::Device::Global().Build(
+      model_name_, device_inodes, device_onodes, model_cache_full_dir);
+  if (device_client == nullptr) {
+    LOG(WARNING) << "[NPU] Build model failed!";
+    return subgraph::FAILED;
+  }
+  auto device_program = std::make_shared<device_program_t>(device_client);
+  device_program_map_[inputs_shape_] = device_program;
+
+  // Query and check the dimensions of valid input and output tensors
+  std::vector<hiai::TensorDimension> device_idims, device_odims;
+  if (device_program->client->GetModelIOTensorDim(
+          model_name_, device_idims, device_odims) != hiai::AI_SUCCESS) {
+    LOG(WARNING)
+        << "[NPU] Get the dimensions of input and output tensors failed!";
+    return subgraph::FAILED;
+  }
+  device_program->device_idims = device_idims;
+  device_program->device_odims = device_odims;
+
+  CHECK_EQ(device_idims.size(), device_inames_.size());
+  CHECK_EQ(device_odims.size(), device_onames_.size());
+  origin_idims_.resize(device_inames_.size());
+  origin_itensors_.resize(device_inames_.size());
+  device_itensors_.resize(device_inames_.size());
+  origin_odims_.resize(device_onames_.size());
+  origin_otensors_.resize(device_onames_.size());
+  device_otensors_.resize(device_onames_.size());
+
+  for (int i = 0; i < device_inames_.size(); i++) {
+    auto node = graph.Get(device_inames_[i]);
+    auto precision = node->precision();
+    auto layout = node->layout();
+    origin_itensors_[i] = scope_->FindMutableTensor(device_inames_[i]);
+    CHECK(origin_itensors_[i]);
+    origin_idims_[i] = origin_itensors_[i]->dims();
+    VLOG(3) << "[NPU] Inputs[" << i << "] name: " << device_inames_[i]
+            << " precision: " << PrecisionToStr(precision)
+            << " layout: " << DataLayoutToStr(layout) << " dims: {"
+            << device_idims[i].GetNumber() << ","
+            << device_idims[i].GetChannel() << ","
+            << device_idims[i].GetHeight() << "," << device_idims[i].GetWidth()
+            << "}";
+    // Prepare the device input tensors
+    CHECK_EQ(origin_idims_[i].production(),
+             device_idims[i].GetNumber() * device_idims[i].GetChannel() *
+                 device_idims[i].GetHeight() * device_idims[i].GetWidth());
+    device_itensors_[i].reset(new hiai::AiTensor);
+    device_itensors_[i]->Init(&(device_idims[i]));
+  }
+  device_program->origin_idims = origin_idims_;
+
+  for (int i = 0; i < device_onames_.size(); i++) {
+    auto node = graph.Get(device_onames_[i]);
+    auto precision = node->precision();
+    auto layout = node->layout();
+    origin_otensors_[i] = scope_->FindMutableTensor(device_onames_[i]);
+    CHECK(origin_otensors_[i]);
+    origin_odims_[i] = origin_otensors_[i]->dims();
+    VLOG(3) << "[NPU] Outputs[" << i << "] name: " << device_onames_[i]
+            << " precision: " << PrecisionToStr(precision)
+            << " layout: " << DataLayoutToStr(layout) << " dims: {"
+            << device_odims[i].GetNumber() << ","
+            << device_odims[i].GetChannel() << ","
+            << device_odims[i].GetHeight() << "," << device_odims[i].GetWidth()
+            << "}";
+    // Prepare the device output tensors
+    switch (precision) {
+      case PRECISION(kFloat):
+        origin_otensors_[i]->mutable_data<float>();
+        break;
+      case PRECISION(kBool):
+        origin_otensors_[i]->mutable_data<bool>();
+        break;
+      case PRECISION(kInt8):
+        origin_otensors_[i]->mutable_data<int8_t>();
+        break;
+      case PRECISION(kInt16):
+        origin_otensors_[i]->mutable_data<int16_t>();
+        break;
+      case PRECISION(kInt32):
+        origin_otensors_[i]->mutable_data<int32_t>();
+        break;
+      case PRECISION(kInt64):
+        origin_otensors_[i]->mutable_data<int64_t>();
+        break;
+      default:
+        LOG(FATAL) << "[NPU] " << device_onames_[i]
+                   << " can't mutable data with precision type "
+                   << PrecisionToStr(precision);
+        break;
+    }
+    device_program->origin_odims = origin_odims_;
+
+    CHECK_EQ(origin_odims_[i].production(),
+             device_odims[i].GetNumber() * device_odims[i].GetChannel() *
+                 device_odims[i].GetHeight() * device_odims[i].GetWidth());
+    device_otensors_[i].reset(new hiai::AiTensor);
+    device_otensors_[i]->Init(&(device_odims[i]));
+  }
+
+  return status;
+}
+
+int SubgraphEngine::LaunchDeviceProgram() {
+  // Copy the data of origin input tensors to the buffer of input HiAI tensors
+  // init device_itensors_, device_otensors_, origin_otensors_
+  auto device_program = device_program_map_[inputs_shape_];
+
+  // Run the HiAI model by name
+  std::string key = "model_name";  // Note: key seems must be model_name
+  hiai::AiContext model_context;
+  model_context.AddPara(key, model_name_);
+  auto GetCurrentUS = []() -> double {
+    struct timeval time;
+    gettimeofday(&time, NULL);
+    return 1e+6 * time.tv_sec + time.tv_usec;
+  };
+  int istamp;
+  auto start_time = GetCurrentUS();
+  CHECK_EQ(device_program->client->Process(
+               model_context, device_itensors_, device_otensors_, 1000, istamp),
+           hiai::AI_SUCCESS);
+  VLOG(3) << "[NPU] Process cost " << GetCurrentUS() - start_time << " us";
+
+  return 0;
+}
+
 int SubgraphEngine::LaunchDeviceProgram() {
   // Copy the data of origin input tensors to the buffer of input HiAI tensors
   // init device_itensors_, device_otensors_, origin_otensors_
@@ -284,9 +448,15 @@ int SubgraphEngine::Build() {
   }
   // In order to attach all of the ops of the block desc, we need to build the
   // original program firstly.
-  BuildOriginProgram();
+  if (!NPUContext::is_pruned_model) {
+    BuildOriginProgram();
+  }
   // Run InferShape() of all of ops, and convert Paddle ops to NPU/XPU IR graph
-  build_device_program_status_ = BuildDeviceProgram();
+  if (!NPUContext::is_pruned_model) {
+    build_device_program_status_ = BuildDeviceProgram();
+  } else {
+    build_device_program_status_ = BuildDeviceProgramOffline();
+  }
   return build_device_program_status_;
 }
 
@@ -344,7 +514,9 @@ void SubgraphCompute::PrepareForRun() {
                                    param.input_data_names,
                                    param.output_data_names,
                                    param.scope,
-                                   NPUContext::SubgraphModelCacheDir()));
+                                   NPUContext::SubgraphModelCacheDir(),
+                                   param.input_dims,
+                                   param.output_dims));
   CHECK(engine_);
   engine_->Build();
 }

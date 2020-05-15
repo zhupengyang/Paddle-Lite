@@ -102,6 +102,7 @@ class Context<TargetType::kNPU> {
   static std::map<std::vector<std::string>, std::vector<std::vector<int64_t>>>
       o_map;
   static std::vector<std::string> vars2remove;
+  static bool is_pruned_model;
 };
 #endif
 
