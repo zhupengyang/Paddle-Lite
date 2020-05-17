@@ -150,6 +150,7 @@ void FillTransformerInput(
     }
   }
 
+#if 0
 #if 1
   // trg_word  [2,1]  int64  0; need lod: [[0,2],[0,1,2]]
   auto trg_word_tensor = predictor->GetInput(3);
@@ -251,6 +252,7 @@ void FillTransformerInput(
       }
     }
   }
+#endif
 }
 
 void CheckOutputTensors(
@@ -282,6 +284,16 @@ void CheckOutputTensors(
     }
   }
 #undef CHECK_TENSOR_WITH_TYPE
+}
+
+void SaveOut(std::unique_ptr<const lite_api::Tensor> out, std::string dir) {
+  auto out_data = out->data<float>();
+  auto out_size = ShapeProduction(out->shape());
+  std::vector<std::string> lines;
+  for (int i = 0; i < out_size; i++) {
+    lines.push_back(std::to_string(out_data[i]));
+  }
+  WriteLines(lines, dir);
 }
 
 std::shared_ptr<lite_api::PaddlePredictor> TestModel(
@@ -323,6 +335,7 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
     predictor->Run();
     LOG(INFO) << i << ", " << GetCurrentUS() - start << "us";
 
+#if 0
     auto out_tensor_0 = predictor->GetOutput(0);
     auto out_data_0 = out_tensor_0->data<int64_t>();
     auto out_size_0 = ShapeProduction(out_tensor_0->shape());
@@ -336,6 +349,14 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
     for (int i = 0; i < out_size_1; i++) {
       LOG(INFO) << "-- out_1: " << out_data_1[i];
     }
+#else
+    for (int j = 0; j < 6; j++) {
+      auto out_tensor = predictor->GetOutput(j);
+      std::string dir =
+          "/data/local/tmp/zpy/out/output_" + std::to_string(j) + ".txt";
+      SaveOut(std::move(out_tensor), dir);
+    }
+#endif
   }
 
   return predictor;
