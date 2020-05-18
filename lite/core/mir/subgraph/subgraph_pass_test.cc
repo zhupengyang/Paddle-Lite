@@ -108,6 +108,7 @@ void FillTransformerInput(
   int max_out_len = 8;
   // src_word pad value
   int64_t eos_idx = 1;
+  float pad_value = -1e4f;
 
   // src_word [n,c]  int64
   auto src_word_tensor = predictor->GetInput(0);
@@ -133,6 +134,7 @@ void FillTransformerInput(
     src_pos_data[i] = 0;
   }
 
+#if 1
   // src_slf_attn_bias  [n,8,c,c]  float32 0; pad_value: -1e9
   auto src_slf_attn_bias_tensor = predictor->GetInput(2);
   std::vector<int64_t> src_slf_attn_bias_dims{
@@ -146,9 +148,10 @@ void FillTransformerInput(
       src_slf_attn_bias_data[offset++] = 0.0f;
     }
     for (int i = seq_len; i < max_seq_len; i++) {
-      src_slf_attn_bias_data[offset++] = -1e6f;
+      src_slf_attn_bias_data[offset++] = pad_value;
     }
   }
+#endif
 
 #if 0
 #if 1
@@ -329,9 +332,8 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
     predictor->Run();
   }
   for (int i = 0; i < FLAGS_repeats; i++) {
-    FillInputTensors(predictor, input_tensor_shape, input_tensor_type, i);
+    FillTransformerInput(predictor, inputs, 0);
     auto start = GetCurrentUS();
-    FillTransformerInput(predictor, inputs, i);
     predictor->Run();
     LOG(INFO) << i << ", " << GetCurrentUS() - start << "us";
 
@@ -350,7 +352,7 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
       LOG(INFO) << "-- out_1: " << out_data_1[i];
     }
 #else
-    for (int j = 0; j < 6; j++) {
+    for (int j = 0; j < predictor->GetOutputNames().size(); j++) {
       auto out_tensor = predictor->GetOutput(j);
       std::string dir =
           "/data/local/tmp/zpy/out/output_" + std::to_string(j) + ".txt";
@@ -391,9 +393,8 @@ TEST(Subgraph, generate_model_and_check_precision) {
                                  input_tensor_shape,
                                  input_tensor_type,
                                  FLAGS_optimized_model_dir + "_ref_opt_model");
-#endif
+#else
 // Generate and run optimized model on NPU/XPU as the target predictor
-#if 1
 #ifdef LITE_WITH_NPU
   valid_places.push_back(lite_api::Place{TARGET(kNPU), PRECISION(kFloat)});
   valid_places.push_back(lite_api::Place{TARGET(kNPU), PRECISION(kInt64)});
