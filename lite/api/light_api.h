@@ -79,6 +79,8 @@ class LITE_API LightPredictor {
   std::vector<std::string> GetOutputNames();
   void PrepareFeedFetch();
 
+  void SaveTensor(std::vector<std::string> tensor_names, std::string dir);
+
  private:
   void Build(const std::string& lite_model_file,
              bool model_from_memory = false);
@@ -126,6 +128,8 @@ class LightPredictorImpl : public lite_api::PaddlePredictor {
       const std::string& name) override;
 
   void Init(const lite_api::MobileConfig& config);
+
+  void SaveTensor(std::vector<std::string> tensor_names, std::string dir);
 
  private:
   std::unique_ptr<lite::LightPredictor> raw_predictor_;

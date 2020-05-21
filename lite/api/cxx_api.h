@@ -107,6 +107,8 @@ class LITE_API Predictor {
       bool record_info = false);
   void SaveOpKernelInfo(const std::string& model_dir);
 
+  void SaveTensor(std::vector<std::string> tensor_names, std::string dir);
+
   // #ifdef LITE_WITH_TRAIN
   //   void Run(const std::vector<framework::Tensor>& tensors) {
   //     FeedVars(tensors);
@@ -165,6 +167,8 @@ class CxxPaddleApiImpl : public lite_api::PaddlePredictor {
       const std::string& model_dir,
       lite_api::LiteModelType model_type = lite_api::LiteModelType::kProtobuf,
       bool record_info = false) override;
+
+  void SaveTensor(std::vector<std::string> tensor_names, std::string dir);
 
  private:
   Predictor raw_predictor_;

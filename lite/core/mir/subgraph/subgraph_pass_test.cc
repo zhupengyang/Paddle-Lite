@@ -337,6 +337,10 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
 #endif
   }
 
+  std::string dir = "/data/local/tmp/zpy/out/";
+  std::vector<std::string> names{"gather_11.tmp_0"};
+  predictor->SaveTensor(names, dir);
+
   return predictor;
 }
 

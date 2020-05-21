@@ -87,6 +87,11 @@ std::vector<std::string> LightPredictorImpl::GetOutputNames() {
   return raw_predictor_->GetOutputNames();
 }
 
+void LightPredictorImpl::SaveTensor(std::vector<std::string> tensor_names,
+                                    std::string dir) {
+  raw_predictor_->SaveTensor(tensor_names, dir);
+}
+
 }  // namespace lite
 
 namespace lite_api {

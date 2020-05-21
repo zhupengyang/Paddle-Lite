@@ -15,6 +15,7 @@
 #include "lite/api/light_api.h"
 #include <algorithm>
 #include <unordered_map>
+#include "lite/api/paddle_place.h"
 #include "paddle_use_kernels.h"  // NOLINT
 #include "paddle_use_ops.h"      // NOLINT
 
@@ -261,6 +262,29 @@ void LightPredictor::DequantizeWeight() {
 
 #undef PROCESS_CONV2D_DATA
 #undef PROCESS_FC_DATA
+}
+
+void SaveOut(Tensor* out, std::string dir) {
+  auto out_data = out->data<float>();
+  auto out_size = out->numel();
+  std::vector<std::string> lines;
+  for (int i = 0; i < out_size; i++) {
+    lines.push_back(std::to_string(out_data[i]));
+  }
+  WriteLines(lines, dir);
+}
+
+void LightPredictor::SaveTensor(std::vector<std::string> tensor_names,
+                                std::string dir) {
+  for (auto name : tensor_names) {
+    auto tar_tensor = program_->exec_scope()->FindMutableTensor(name);
+    if (tar_tensor == nullptr) {
+      LOG(WARNING) << "not find tensor: " << name;
+    }
+    if (tar_tensor->precision() != PrecisionType::kFloat) continue;
+    std::string full_dir = dir + "/" + name + ".txt";
+    SaveOut(tar_tensor, full_dir);
+  }
 }
 
 }  // namespace lite

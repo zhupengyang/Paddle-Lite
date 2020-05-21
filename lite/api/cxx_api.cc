@@ -384,6 +384,33 @@ lite::Tensor *Predictor::GetInputByName(const std::string &name) {
   }
 }
 
+void SaveOut0(Tensor *out, std::string dir) {
+  auto out_data = out->data<float>();
+  auto out_size = out->numel();
+  std::vector<std::string> lines;
+  for (int i = 0; i < out_size; i++) {
+    lines.push_back(std::to_string(out_data[i]));
+  }
+  WriteLines(lines, dir);
+}
+
+void Predictor::SaveTensor(std::vector<std::string> tensor_names,
+                           std::string dir) {
+  auto t = scope_->LocalVarNames();
+  for (auto i : t) {
+    LOG(INFO) << "--- local var name: " << i;
+  }
+  for (auto name : tensor_names) {
+    auto tar_tensor = scope_->FindMutableTensor(name);
+    if (tar_tensor == nullptr) {
+      LOG(WARNING) << "not find tensor: " << name;
+    }
+    if (tar_tensor->precision() != PrecisionType::kFloat) continue;
+    std::string full_dir = dir + "/" + name + ".txt";
+    SaveOut0(tar_tensor, full_dir);
+  }
+}
+
 // #ifdef LITE_WITH_TRAIN
 // void Predictor::FeedVars(const std::vector<framework::Tensor> &tensors) {
 //   auto var = scope_->FindVar("feed");

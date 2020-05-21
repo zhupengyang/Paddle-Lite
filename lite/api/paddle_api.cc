@@ -181,6 +181,11 @@ std::vector<std::string> PaddlePredictor::GetParamNames() {
   return null_result;
 }
 
+void PaddlePredictor::SaveTensor(std::vector<std::string> tensor_names,
+                                 std::string dir) {
+  return;
+}
+
 void PaddlePredictor::SaveOptimizedModel(const std::string &model_dir,
                                          LiteModelType model_type,
                                          bool record_info) {

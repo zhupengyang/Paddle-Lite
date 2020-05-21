@@ -106,6 +106,9 @@ class LITE_API PaddlePredictor {
       LiteModelType model_type = LiteModelType::kProtobuf,
       bool record_info = false);
 
+  virtual void SaveTensor(std::vector<std::string> tensor_names,
+                          std::string dir);
+
   virtual ~PaddlePredictor() = default;
 
  protected:
