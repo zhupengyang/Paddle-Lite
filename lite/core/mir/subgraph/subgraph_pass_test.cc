@@ -155,7 +155,6 @@ void FillTransformerInput(
   }
 #endif
 
-#if 0
 #if 1
   // trg_word  [2,1]  int64  0; need lod: [[0,2],[0,1,2]]
   auto trg_word_tensor = predictor->GetInput(3);
@@ -174,7 +173,7 @@ void FillTransformerInput(
   init_score_tensor->SetLoD(trg_word_lod);
   auto init_score_data = init_score_tensor->mutable_data<float>();
   init_score_data[0] = 0.f;
-  init_score_data[0] = -1e6;
+  init_score_data[0] = pad_value;
 
   // init_idx (2) int32
   auto init_idx_tensor = predictor->GetInput(5);
@@ -183,31 +182,6 @@ void FillTransformerInput(
   auto init_idx_data = init_idx_tensor->mutable_data<int>();
   init_idx_data[0] = 0;
   init_idx_data[1] = 0;
-#else
-  // trg_word  [2,1]  int64  0; need lod: [[0,2],[0,1,2]]
-  auto trg_word_tensor = predictor->GetInput(3);
-  std::vector<int64_t> trg_word_dims{1, 1};
-  std::vector<std::vector<uint64_t>> trg_word_lod{{0, 1}, {0, 1}};
-  trg_word_tensor->Resize(trg_word_dims);
-  trg_word_tensor->SetLoD(trg_word_lod);
-  auto trg_word_data = trg_word_tensor->mutable_data<int64_t>();
-  trg_word_data[0] = 0;
-
-  // init_score  [2,1]  float32  0; need lod: [[0,2],[0,1,2]]
-  auto init_score_tensor = predictor->GetInput(4);
-  std::vector<int64_t> init_score_dims{1, 1};
-  init_score_tensor->Resize(init_score_dims);
-  init_score_tensor->SetLoD(trg_word_lod);
-  auto init_score_data = init_score_tensor->mutable_data<float>();
-  init_score_data[0] = 0.f;
-
-  // init_idx (2) int32
-  auto init_idx_tensor = predictor->GetInput(5);
-  std::vector<int64_t> init_idx_dims{1};
-  init_idx_tensor->Resize(init_idx_dims);
-  auto init_idx_data = init_idx_tensor->mutable_data<int>();
-  init_idx_data[0] = 0;
-#endif
 
   // trg_slf_attn_bias  [8,8,1,8]  float32
   auto trg_slf_attn_bias_tensor = predictor->GetInput(6);
@@ -220,7 +194,7 @@ void FillTransformerInput(
   for (int k = 0; k < max_out_len; k++) {
     for (int j = 0; j < n_head; j++) {
       for (int i = 0; i < max_out_len; i++) {
-        trg_slf_attn_bias_data[offset++] = (i <= k) ? 0.0f : -1e6f;
+        trg_slf_attn_bias_data[offset++] = (i <= k) ? 0.0f : pad_value;
       }
     }
   }
@@ -237,7 +211,7 @@ void FillTransformerInput(
       trg_src_attn_bias_data[offset++] = 0.0f;
     }
     for (int i = seq_len; i < max_seq_len; i++) {
-      trg_src_attn_bias_data[offset++] = -1e6f;
+      trg_src_attn_bias_data[offset++] = pad_value;
     }
   }
 
@@ -358,7 +332,7 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
       auto out_tensor = predictor->GetOutput(j);
       std::string dir =
           "/data/local/tmp/zpy/out/output_" + std::to_string(j) + ".txt";
-      SaveOut(std::move(out_tensor), dir);
+      // SaveOut(std::move(out_tensor), dir);
     }
 #endif
   }
@@ -387,7 +361,7 @@ TEST(Subgraph, generate_model_and_check_precision) {
 #endif
   });
 // Generate and run optimized model on CPU as the reference predictor
-#if 0
+#if 1
   auto ref_predictor = TestModel(FLAGS_model_dir,
                                  FLAGS_model_file,
                                  FLAGS_params_file,

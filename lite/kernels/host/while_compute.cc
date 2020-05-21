@@ -18,6 +18,7 @@
 #include "lite/operators/conditional_block_op.h"
 #include "lite/operators/subgraph_op.h"
 #include "lite/operators/while_op.h"
+#include "lite/utils/io.h"
 
 namespace paddle {
 namespace lite {
@@ -112,6 +113,7 @@ void WhileCompute::Run() {
     LOG(INFO) << "--- while time: " << while_num;
     executor_->Run();
     while_num++;
+    break;
   }
   LOG(INFO) << "--- while end.";
   LOG(INFO) << "--- while_num: " << while_num;
