@@ -28,6 +28,7 @@ DEFINE_string(input_tensor_type, "float32", "data type of input tensors");
 DEFINE_string(output_tensor_type, "float32", "data type of output tensors");
 DEFINE_string(input_file, "", "input data file path");
 DEFINE_string(subgraph_model_cache_dir, "", "dir of subgraph model cache");
+DEFINE_string(padding, "-1000", "");
 
 namespace paddle {
 namespace lite {
@@ -108,7 +109,8 @@ void FillTransformerInput(
   int max_out_len = 8;
   // src_word pad value
   int64_t eos_idx = 1;
-  float pad_value = -1e4f;
+  // float pad_value = -1e3f;
+  float pad_value = atof(FLAGS_padding.c_str());
 
   // src_word [n,c]  int64
   auto src_word_tensor = predictor->GetInput(0);
