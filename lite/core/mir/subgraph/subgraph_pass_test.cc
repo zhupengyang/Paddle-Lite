@@ -338,7 +338,23 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
   }
 
   std::string dir = "/data/local/tmp/zpy/out/";
-  std::vector<std::string> names{"gather_11.tmp_0"};
+  std::vector<std::string> names{"gather_11.tmp_0",
+                                 "gather_8.tmp_0",
+                                 "gather_6.tmp_0",
+                                 "gather_2.tmp_0",
+                                 "gather_12.tmp_0",
+                                 "gather_1.tmp_0",
+                                 "gather_10.tmp_0",
+                                 "gather_5.tmp_0",
+                                 "gather_0.tmp_0",
+                                 "gather_4.tmp_0",
+                                 "gather_7.tmp_0",
+                                 "gather_13.tmp_0",
+                                 "gather_9.tmp_0",
+                                 "gather_3.tmp_0",
+                                 "gather_14.tmp_0",
+                                 "embedding_2.tmp_0",
+                                 "embedding_3.tmp_0"};
   predictor->SaveTensor(names, dir);
 
   return predictor;

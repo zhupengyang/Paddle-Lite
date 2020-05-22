@@ -168,8 +168,6 @@ class CxxPaddleApiImpl : public lite_api::PaddlePredictor {
       lite_api::LiteModelType model_type = lite_api::LiteModelType::kProtobuf,
       bool record_info = false) override;
 
-  void SaveTensor(std::vector<std::string> tensor_names, std::string dir);
-
  private:
   Predictor raw_predictor_;
   lite_api::CxxConfig config_;

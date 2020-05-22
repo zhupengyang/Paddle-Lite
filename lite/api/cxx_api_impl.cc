@@ -145,11 +145,6 @@ void CxxPaddleApiImpl::SaveOptimizedModel(const std::string &model_dir,
   raw_predictor_.SaveModel(model_dir, model_type, record_info);
 }
 
-void CxxPaddleApiImpl::SaveTensor(std::vector<std::string> tensor_names,
-                                  std::string dir) {
-  raw_predictor_.SaveTensor(tensor_names, dir);
-}
-
 }  // namespace lite
 
 namespace lite_api {
