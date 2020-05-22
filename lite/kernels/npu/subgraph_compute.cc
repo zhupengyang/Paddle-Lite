@@ -72,6 +72,12 @@ int SubgraphEngine::BuildDeviceProgram() {
       return subgraph::FAILED;
     }
   }
+
+  auto nodes = graph.Nodes();
+  for (auto i : nodes) {
+    LOG(INFO) << "--- node name: " << i.first;
+  }
+
   // Collect the valid input and output nodes in the HiAI IR graph and update
   // the input and output names
   device_inames_.clear();

@@ -186,6 +186,10 @@ class Graph {
     return nodes_.find(name) != nodes_.end();
   }
 
+  std::unordered_map<std::string, std::vector<std::shared_ptr<Node>>> Nodes() {
+    return nodes_;
+  }
+
  private:
   std::unordered_map<std::string, std::vector<std::shared_ptr<Node>>> nodes_;
 };
