@@ -20,11 +20,11 @@
 #include <unordered_map>
 #include <vector>
 #include "graph/buffer.h"
+#include "graph/compatible/operator_reg.h"
 #include "graph/graph.h"
 #include "graph/model.h"
 #include "graph/op/all_ops.h"
 #include "graph/operator.h"
-#include "graph/operator_reg.h"
 #include "lite/core/op_lite.h"
 #include "lite/utils/macros.h"
 
