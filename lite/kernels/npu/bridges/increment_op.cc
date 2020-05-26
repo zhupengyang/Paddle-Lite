@@ -56,8 +56,8 @@ int IncrementConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   auto y_node = graph->Add(out_name + "/y", y);
 
   // add node
-  auto increment_node = graph->Add<ge::op::Add>(out_name);
-  auto increment_op = increment_node->data<ge::op::Add>();
+  auto increment_node = graph->Add<hiai::op::Add>(out_name);
+  auto increment_op = increment_node->data<hiai::op::Add>();
   increment_op->set_input_x1(*x_node->data());
   increment_op->set_input_x2(*y_node->data());
 

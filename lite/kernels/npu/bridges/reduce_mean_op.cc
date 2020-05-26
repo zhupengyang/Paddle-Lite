@@ -59,15 +59,15 @@ int ReduceMeanConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   auto dim_node = graph->Add(out_name + "/dim", dim);
 
   // Reduce Sum node
-  auto reduce_sum_node = graph->Add<ge::op::ReduceSum>(out_name + "/reducesum");
-  auto reduce_sum_op = reduce_sum_node->data<ge::op::ReduceSum>();
+  auto reduce_sum_node = graph->Add<hiai::op::ReduceSum>(out_name + "/reducesum");
+  auto reduce_sum_op = reduce_sum_node->data<hiai::op::ReduceSum>();
   reduce_sum_op->set_input_x(*x_node->data());
   reduce_sum_op->set_input_w(*dim_node->data());
   reduce_sum_op->set_attr_keep_dims(keep_dim);
 
   // Scale node
-  auto scale_node = graph->Add<ge::op::Scale>(out_name);
-  auto scale_op = scale_node->data<ge::op::Scale>();
+  auto scale_node = graph->Add<hiai::op::Scale>(out_name);
+  auto scale_op = scale_node->data<hiai::op::Scale>();
   scale_op->set_input_x(*reduce_sum_node->data());
   scale_op->set_attr_axis(1);
 

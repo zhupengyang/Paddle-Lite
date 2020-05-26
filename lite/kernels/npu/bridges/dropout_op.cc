@@ -58,8 +58,8 @@ int DropoutConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   }
 
   // Scale node
-  auto scale_node = graph->Add<ge::op::Scale>(out_name);
-  auto scale_op = scale_node->data<ge::op::Scale>();
+  auto scale_node = graph->Add<hiai::op::Scale>(out_name);
+  auto scale_op = scale_node->data<hiai::op::Scale>();
   scale_op->set_input_x(*x_node->data());
   scale_op->set_attr_axis(1);
 

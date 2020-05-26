@@ -100,17 +100,17 @@ int InterpolateConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   }
 
   if (interp_method == "bilinear") {
-    auto bilinear_interp_node = graph->Add<ge::op::ResizeBilinear>(out_name);
+    auto bilinear_interp_node = graph->Add<hiai::op::ResizeBilinear>(out_name);
     auto bilinear_interp_op =
-        bilinear_interp_node->data<ge::op::ResizeBilinear>();
+        bilinear_interp_node->data<hiai::op::ResizeBilinear>();
     bilinear_interp_op->set_input_x(*x_node->data());
     bilinear_interp_op->set_input_size(*out_size_node->data());
     bilinear_interp_op->set_attr_align_corners(align_corners);
   } else if (interp_method == "nearest") {
     auto nearest_interp_node =
-        graph->Add<ge::op::ResizeNearestNeighbor>(out_name);
+        graph->Add<hiai::op::ResizeNearestNeighbor>(out_name);
     auto nearest_interp_op =
-        nearest_interp_node->data<ge::op::ResizeNearestNeighbor>();
+        nearest_interp_node->data<hiai::op::ResizeNearestNeighbor>();
     nearest_interp_op->set_input_image(*x_node->data());
     nearest_interp_op->set_input_size(*out_size_node->data());
     nearest_interp_op->set_attr_align_corners(align_corners);

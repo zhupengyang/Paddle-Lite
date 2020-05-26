@@ -65,8 +65,8 @@ int MulConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   if (graph->Has(x_name)) {
     x_node = graph->Get(x_name);
     if (x_dims.size() != 2) {
-      auto reshaped_x_node = graph->Add<ge::op::Reshape>(x_name + "/reshape");
-      auto reshaped_x_op = reshaped_x_node->data<ge::op::Reshape>();
+      auto reshaped_x_node = graph->Add<hiai::op::Reshape>(x_name + "/reshape");
+      auto reshaped_x_op = reshaped_x_node->data<hiai::op::Reshape>();
       reshaped_x_op->set_input_tensor(*x_node->data());
       reshaped_x_op->set_attr_shape({m, k});
       reshaped_x_op->set_attr_axis(0);
@@ -82,8 +82,8 @@ int MulConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   if (graph->Has(y_name)) {
     y_node = graph->Get(y_name);
     if (y_dims.size() != 2) {
-      auto reshaped_y_node = graph->Add<ge::op::Reshape>(y_name + "/reshape");
-      auto reshaped_y_op = reshaped_y_node->data<ge::op::Reshape>();
+      auto reshaped_y_node = graph->Add<hiai::op::Reshape>(y_name + "/reshape");
+      auto reshaped_y_op = reshaped_y_node->data<hiai::op::Reshape>();
       reshaped_y_op->set_input_tensor(*y_node->data());
       reshaped_y_op->set_attr_shape({k, n});
       reshaped_y_op->set_attr_axis(0);
@@ -94,14 +94,14 @@ int MulConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   }
 
   // Matmul node
-  auto mul_node = graph->Add<ge::op::MatMul>(out_name);
-  auto mul_op = mul_node->data<ge::op::MatMul>();
+  auto mul_node = graph->Add<hiai::op::MatMul>(out_name);
+  auto mul_op = mul_node->data<hiai::op::MatMul>();
   mul_op->set_input_x1(*x_node->data());
   mul_op->set_input_x2(*y_node->data());
 
   if (out_dims.size() != 2) {
-    auto reshaped_out_node = graph->Add<ge::op::Reshape>(out_name);
-    auto reshaped_out_op = reshaped_out_node->data<ge::op::Reshape>();
+    auto reshaped_out_node = graph->Add<hiai::op::Reshape>(out_name);
+    auto reshaped_out_op = reshaped_out_node->data<hiai::op::Reshape>();
     reshaped_out_op->set_input_tensor(*mul_node->data());
     auto out_shape = out_dims.Vectorize();
     reshaped_out_op->set_attr_shape(

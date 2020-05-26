@@ -96,7 +96,7 @@ int ConvConverter(void* ctx, OpLite* op, KernelBase* kernel) {
 
   // Check depthwise mode, and decide whether use ConvolutionDepthwise Op
   bool use_depthwise_conv =
-      false;  // Whether use ge::op::ConvolutionDepthwise ?
+      false;  // Whether use hiai::op::ConvolutionDepthwise ?
   bool is_depthwise_mode = ic == groups && oc == groups;
   if (is_depthwise_mode &&
       !((groups == 1 || groups >= 5) && dilations[0] == 1 &&
@@ -152,8 +152,8 @@ int ConvConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   // Conv node
   std::shared_ptr<Node> conv_node = nullptr;
   if (use_depthwise_conv && is_depthwise_mode) {
-    conv_node = graph->Add<ge::op::ConvolutionDepthwise>(output_name);
-    auto conv_op = conv_node->data<ge::op::ConvolutionDepthwise>();
+    conv_node = graph->Add<hiai::op::ConvolutionDepthwise>(output_name);
+    auto conv_op = conv_node->data<hiai::op::ConvolutionDepthwise>();
     conv_op->set_input_x(*input_node->data());
     conv_op->set_input_filter(*filter_node->data());
     conv_op->set_attr_mode(1);
@@ -171,15 +171,15 @@ int ConvConverter(void* ctx, OpLite* op, KernelBase* kernel) {
     // ConvolutionDepthwise Op doesn't support bias, so append Add node to
     // support bias
     if (bias_node != nullptr) {
-      auto add_node = graph->Add<ge::op::Add>(output_name);
-      auto add_op = add_node->data<ge::op::Add>();
+      auto add_node = graph->Add<hiai::op::Add>(output_name);
+      auto add_op = add_node->data<hiai::op::Add>();
       add_op->set_input_x1(*conv_node->data());
       add_op->set_input_x2(*bias_node->data());
       conv_node = add_node;
     }
   } else {
-    conv_node = graph->Add<ge::op::Convolution>(output_name);
-    auto conv_op = conv_node->data<ge::op::Convolution>();
+    conv_node = graph->Add<hiai::op::Convolution>(output_name);
+    auto conv_op = conv_node->data<hiai::op::Convolution>();
     conv_op->set_input_x(*input_node->data());
     conv_op->set_input_w(*filter_node->data());
     conv_op->set_attr_mode(1);
@@ -203,8 +203,8 @@ int ConvConverter(void* ctx, OpLite* op, KernelBase* kernel) {
       if (is_channel_bias) {
         conv_op->set_input_b(*bias_node->data());
       } else {
-        auto add_node = graph->Add<ge::op::Add>(output_name);
-        auto add_op = add_node->data<ge::op::Add>();
+        auto add_node = graph->Add<hiai::op::Add>(output_name);
+        auto add_op = add_node->data<hiai::op::Add>();
         add_op->set_input_x1(*conv_node->data());
         add_op->set_input_x2(*bias_node->data());
         conv_node = add_node;
@@ -214,8 +214,8 @@ int ConvConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   CHECK(conv_node);
 
   if (!act_type.empty()) {
-    auto act_node = graph->Add<ge::op::Activation>(output_name);
-    auto act_op = act_node->data<ge::op::Activation>();
+    auto act_node = graph->Add<hiai::op::Activation>(output_name);
+    auto act_op = act_node->data<hiai::op::Activation>();
     act_op->set_input_x(*conv_node->data());
     act_op->set_attr_mode(CvtActMode(act_type));
     if (act_type == "leaky_relu") {

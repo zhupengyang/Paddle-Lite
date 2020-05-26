@@ -54,7 +54,7 @@ int ActConverter(void* ctx, OpLite* op, KernelBase* kernel) {
 }
 
 template <>
-int ActConverter<ge::op::Activation>(void* ctx,
+int ActConverter<hiai::op::Activation>(void* ctx,
                                      OpLite* op,
                                      KernelBase* kernel) {
   CHECK(ctx != nullptr);
@@ -80,8 +80,8 @@ int ActConverter<ge::op::Activation>(void* ctx,
   }
 
   // Act node
-  auto act_node = graph->template Add<ge::op::Activation>(out_name);
-  auto act_op = act_node->template data<ge::op::Activation>();
+  auto act_node = graph->template Add<hiai::op::Activation>(out_name);
+  auto act_op = act_node->template data<hiai::op::Activation>();
   act_op->set_input_x(*x_node->data());
   // TODO(hong19860320) set the coef value for act Ops, such as leaky_relu,
   // clipped_relu etc.
@@ -112,39 +112,39 @@ int ActConverter<ge::op::Activation>(void* ctx,
 REGISTER_SUBGRAPH_BRIDGE(
     sigmoid,
     kNPU,
-    paddle::lite::subgraph::npu::ActConverter<ge::op::Activation>);
+    paddle::lite::subgraph::npu::ActConverter<hiai::op::Activation>);
 REGISTER_SUBGRAPH_BRIDGE(
-    relu, kNPU, paddle::lite::subgraph::npu::ActConverter<ge::op::Activation>);
+    relu, kNPU, paddle::lite::subgraph::npu::ActConverter<hiai::op::Activation>);
 REGISTER_SUBGRAPH_BRIDGE(
-    tanh, kNPU, paddle::lite::subgraph::npu::ActConverter<ge::op::Activation>);
+    tanh, kNPU, paddle::lite::subgraph::npu::ActConverter<hiai::op::Activation>);
 REGISTER_SUBGRAPH_BRIDGE(
     relu_clipped,
     kNPU,
-    paddle::lite::subgraph::npu::ActConverter<ge::op::Activation>);
+    paddle::lite::subgraph::npu::ActConverter<hiai::op::Activation>);
 REGISTER_SUBGRAPH_BRIDGE(
-    relu6, kNPU, paddle::lite::subgraph::npu::ActConverter<ge::op::Activation>);
+    relu6, kNPU, paddle::lite::subgraph::npu::ActConverter<hiai::op::Activation>);
 REGISTER_SUBGRAPH_BRIDGE(
     leaky_relu,
     kNPU,
-    paddle::lite::subgraph::npu::ActConverter<ge::op::Activation>);
+    paddle::lite::subgraph::npu::ActConverter<hiai::op::Activation>);
 REGISTER_SUBGRAPH_BRIDGE(
-    abs, kNPU, paddle::lite::subgraph::npu::ActConverter<ge::op::Activation>);
+    abs, kNPU, paddle::lite::subgraph::npu::ActConverter<hiai::op::Activation>);
 REGISTER_SUBGRAPH_BRIDGE(
     softsign,
     kNPU,
-    paddle::lite::subgraph::npu::ActConverter<ge::op::Activation>);
+    paddle::lite::subgraph::npu::ActConverter<hiai::op::Activation>);
 REGISTER_SUBGRAPH_BRIDGE(
     softplus,
     kNPU,
-    paddle::lite::subgraph::npu::ActConverter<ge::op::Activation>);
+    paddle::lite::subgraph::npu::ActConverter<hiai::op::Activation>);
 REGISTER_SUBGRAPH_BRIDGE(
     hard_sigmoid,
     kNPU,
-    paddle::lite::subgraph::npu::ActConverter<ge::op::Activation>);
+    paddle::lite::subgraph::npu::ActConverter<hiai::op::Activation>);
 
 REGISTER_SUBGRAPH_BRIDGE(
-    log, kNPU, paddle::lite::subgraph::npu::ActConverter<ge::op::Log>);
+    log, kNPU, paddle::lite::subgraph::npu::ActConverter<hiai::op::Log>);
 REGISTER_SUBGRAPH_BRIDGE(
-    square, kNPU, paddle::lite::subgraph::npu::ActConverter<ge::op::Square>);
+    square, kNPU, paddle::lite::subgraph::npu::ActConverter<hiai::op::Square>);
 REGISTER_SUBGRAPH_BRIDGE(
-    sqrt, kNPU, paddle::lite::subgraph::npu::ActConverter<ge::op::Sqrt>);
+    sqrt, kNPU, paddle::lite::subgraph::npu::ActConverter<hiai::op::Sqrt>);

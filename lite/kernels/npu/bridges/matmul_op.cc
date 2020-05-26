@@ -85,15 +85,15 @@ int MatMulConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   // Matmul node
   std::shared_ptr<Node> matmul_node = nullptr;
   if (x_dims.size() == 2) {
-    matmul_node = graph->Add<ge::op::MatMul>(out_name);
-    auto matmul_op = matmul_node->data<ge::op::MatMul>();
+    matmul_node = graph->Add<hiai::op::MatMul>(out_name);
+    auto matmul_op = matmul_node->data<hiai::op::MatMul>();
     matmul_op->set_input_x1(*x_node->data());
     matmul_op->set_input_x2(*y_node->data());
     matmul_op->set_attr_transpose_x1(transpose_x);
     matmul_op->set_attr_transpose_x2(transpose_y);
   } else {
-    matmul_node = graph->Add<ge::op::BatchMatMul>(out_name);
-    auto matmul_op = matmul_node->data<ge::op::BatchMatMul>();
+    matmul_node = graph->Add<hiai::op::BatchMatMul>(out_name);
+    auto matmul_op = matmul_node->data<hiai::op::BatchMatMul>();
     matmul_op->set_input_x(*x_node->data());
     matmul_op->set_input_y(*y_node->data());
     matmul_op->set_attr_adj_x(transpose_x);
@@ -101,8 +101,8 @@ int MatMulConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   }
 
   if (fabs(alpha - 1.f) > 1e-6f) {
-    auto scaled_out_node = graph->Add<ge::op::Scale>(out_name);
-    auto scaled_out_op = scaled_out_node->data<ge::op::Scale>();
+    auto scaled_out_node = graph->Add<hiai::op::Scale>(out_name);
+    auto scaled_out_op = scaled_out_node->data<hiai::op::Scale>();
     scaled_out_op->set_input_x(*matmul_node->data());
     scaled_out_op->set_attr_axis(1);
     std::vector<int64_t> scale_bias_shape(4, 1);

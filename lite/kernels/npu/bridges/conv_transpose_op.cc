@@ -118,8 +118,8 @@ int ConvTransposeConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   auto filter_node = graph->Add(filter_name, *filter);
 
   // Deconv node
-  auto conv_transpose_node = graph->Add<ge::op::Deconvolution>(output_name);
-  auto conv_transpose_op = conv_transpose_node->data<ge::op::Deconvolution>();
+  auto conv_transpose_node = graph->Add<hiai::op::Deconvolution>(output_name);
+  auto conv_transpose_op = conv_transpose_node->data<hiai::op::Deconvolution>();
   conv_transpose_op->set_input_input_sizes(*input_sizes_node->data());
   conv_transpose_op->set_input_filter(*filter_node->data());
   conv_transpose_op->set_input_x(*input_node->data());
@@ -154,8 +154,8 @@ int ConvTransposeConverter(void* ctx, OpLite* op, KernelBase* kernel) {
       bias_node = graph->Add(bias_name, *bias, {1, channel_size, 1, 1});
     }
     // Append add node to add bias node
-    auto add_node = graph->Add<ge::op::Add>(output_name);
-    auto add_op = add_node->data<ge::op::Add>();
+    auto add_node = graph->Add<hiai::op::Add>(output_name);
+    auto add_op = add_node->data<hiai::op::Add>();
     add_op->set_input_x1(*conv_transpose_node->data());
     add_op->set_input_x2(*bias_node->data());
     conv_transpose_node = add_node;
@@ -163,8 +163,8 @@ int ConvTransposeConverter(void* ctx, OpLite* op, KernelBase* kernel) {
 
   if (fuse_relu) {
     // Append relu node if fuse_relu is true
-    auto relu_node = graph->Add<ge::op::Activation>(output_name);
-    auto relu_op = relu_node->data<ge::op::Activation>();
+    auto relu_node = graph->Add<hiai::op::Activation>(output_name);
+    auto relu_op = relu_node->data<hiai::op::Activation>();
     relu_op->set_input_x(*conv_transpose_node->data());
     relu_op->set_attr_mode(CvtActMode("relu"));
   }

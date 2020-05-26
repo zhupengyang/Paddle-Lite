@@ -51,8 +51,8 @@ int ExpandConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   std::shared_ptr<Node> w_node = graph->Add(out_name + "/w", expand_times);
 
   // expand node
-  auto expand_node = graph->Add<ge::op::Tile>(out_name);
-  auto expand_op = expand_node->data<ge::op::Tile>();
+  auto expand_node = graph->Add<hiai::op::Tile>(out_name);
+  auto expand_op = expand_node->data<hiai::op::Tile>();
   expand_op->set_input_x(*x_node->data());
   expand_op->set_input_w(*w_node->data());
 

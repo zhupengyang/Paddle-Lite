@@ -49,8 +49,8 @@ int ArgmaxConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   auto axis_node = graph->Add(out_name + "/axis", axis);
 
   // Argmax node
-  auto argmax_node = graph->Add<ge::op::ArgMax>(out_name);
-  auto argmax_op = argmax_node->data<ge::op::ArgMax>();
+  auto argmax_node = graph->Add<hiai::op::ArgMax>(out_name);
+  auto argmax_op = argmax_node->data<hiai::op::ArgMax>();
   argmax_op->set_input_x1(*x_node->data());
   argmax_op->set_input_x2(*axis_node->data());
   return SUCCESS;

@@ -130,8 +130,8 @@ int ElementwiseConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   std::shared_ptr<Node> x_node = nullptr;
   if (graph->Has(x_name)) {
     x_node = graph->Get(x_name);
-    auto reshaped_x_node = graph->Add<ge::op::Reshape>(x_name + "/reshape");
-    auto reshaped_x_op = reshaped_x_node->data<ge::op::Reshape>();
+    auto reshaped_x_node = graph->Add<hiai::op::Reshape>(x_name + "/reshape");
+    auto reshaped_x_op = reshaped_x_node->data<hiai::op::Reshape>();
     reshaped_x_op->set_input_tensor(*x_node->data());
     reshaped_x_op->set_attr_shape(
         ge::AttrValue::LIST_INT(x_new_shape.begin(), x_new_shape.end()));
@@ -145,8 +145,8 @@ int ElementwiseConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   std::shared_ptr<Node> y_node = nullptr;
   if (graph->Has(y_name)) {
     y_node = graph->Get(y_name);
-    auto reshaped_y_node = graph->Add<ge::op::Reshape>(y_name + "/reshape");
-    auto reshaped_y_op = reshaped_y_node->data<ge::op::Reshape>();
+    auto reshaped_y_node = graph->Add<hiai::op::Reshape>(y_name + "/reshape");
+    auto reshaped_y_op = reshaped_y_node->data<hiai::op::Reshape>();
     reshaped_y_op->set_input_tensor(*y_node->data());
     reshaped_y_op->set_attr_shape(
         ge::AttrValue::LIST_INT(y_new_shape.begin(), y_new_shape.end()));
@@ -160,26 +160,26 @@ int ElementwiseConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   std::shared_ptr<Node> elt_node = nullptr;
   if (op_type == "elementwise_add" ||
       op_type == "fusion_elementwise_add_activation") {
-    elt_node = graph->Add<ge::op::Add>(out_name);
-    auto elt_op = elt_node->data<ge::op::Add>();
+    elt_node = graph->Add<hiai::op::Add>(out_name);
+    auto elt_op = elt_node->data<hiai::op::Add>();
     elt_op->set_input_x1(*x_node->data());
     elt_op->set_input_x2(*y_node->data());
   } else if (op_type == "elementwise_sub" ||
              op_type == "fusion_elementwise_sub_activation") {
-    elt_node = graph->Add<ge::op::Sub>(out_name);
-    auto elt_op = elt_node->data<ge::op::Sub>();
+    elt_node = graph->Add<hiai::op::Sub>(out_name);
+    auto elt_op = elt_node->data<hiai::op::Sub>();
     elt_op->set_input_x1(*x_node->data());
     elt_op->set_input_x2(*y_node->data());
   } else if (op_type == "elementwise_mul" ||
              op_type == "fusion_elementwise_mul_activation") {
-    elt_node = graph->Add<ge::op::Mul>(out_name);
-    auto elt_op = elt_node->data<ge::op::Mul>();
+    elt_node = graph->Add<hiai::op::Mul>(out_name);
+    auto elt_op = elt_node->data<hiai::op::Mul>();
     elt_op->set_input_x(*x_node->data());
     elt_op->set_input_y(*y_node->data());
   } else if (op_type == "elementwise_div" ||
              op_type == "fusion_elementwise_div_activation") {
-    elt_node = graph->Add<ge::op::RealDiv>(out_name);
-    auto elt_op = elt_node->data<ge::op::RealDiv>();
+    elt_node = graph->Add<hiai::op::RealDiv>(out_name);
+    auto elt_op = elt_node->data<hiai::op::RealDiv>();
     elt_op->set_input_x1(*x_node->data());
     elt_op->set_input_x2(*y_node->data());
   } else {
@@ -189,8 +189,8 @@ int ElementwiseConverter(void* ctx, OpLite* op, KernelBase* kernel) {
 
   auto out_shape = out_dims.Vectorize();
   if (out_shape != x_new_shape) {
-    auto reshaped_elt_node = graph->Add<ge::op::Reshape>(out_name);
-    auto reshaped_elt_op = reshaped_elt_node->data<ge::op::Reshape>();
+    auto reshaped_elt_node = graph->Add<hiai::op::Reshape>(out_name);
+    auto reshaped_elt_op = reshaped_elt_node->data<hiai::op::Reshape>();
     reshaped_elt_op->set_input_tensor(*elt_node->data());
     reshaped_elt_op->set_attr_shape(
         ge::AttrValue::LIST_INT(out_shape.begin(), out_shape.end()));
@@ -204,8 +204,8 @@ int ElementwiseConverter(void* ctx, OpLite* op, KernelBase* kernel) {
       op_type == "fusion_elementwise_mul_activation" ||
       op_type == "fusion_elementwise_div_activation") {
     auto act_type = op_info->GetAttr<std::string>("act_type");
-    auto act_node = graph->Add<ge::op::Activation>(out_name);
-    auto act_op = act_node->data<ge::op::Activation>();
+    auto act_node = graph->Add<hiai::op::Activation>(out_name);
+    auto act_op = act_node->data<hiai::op::Activation>();
     act_op->set_input_x(*elt_node->data());
     // TODO(hong19860320) set the coef value for act Ops, such as leaky_relu,
     // clipped_relu etc.

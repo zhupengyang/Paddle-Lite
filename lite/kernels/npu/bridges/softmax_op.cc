@@ -55,8 +55,8 @@ int SoftmaxConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   }
 
   // Softmax node
-  auto softmax_node = graph->Add<ge::op::Softmax>(out_name);
-  auto softmax_op = softmax_node->data<ge::op::Softmax>();
+  auto softmax_node = graph->Add<hiai::op::Softmax>(out_name);
+  auto softmax_op = softmax_node->data<hiai::op::Softmax>();
   softmax_op->set_input_x(*x_node->data());
   softmax_op->set_attr_axis(axis);
   return REBUILD_WHEN_SHAPE_CHANGED;

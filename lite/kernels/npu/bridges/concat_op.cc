@@ -38,8 +38,8 @@ int ConcatConverter(void* ctx, OpLite* op, KernelBase* kernel) {
 
   // Traverse all of input nodes which are added into the new created concat
   // node
-  auto concat_node = graph->Add<ge::op::Concat>(out_name);
-  auto concat_op = concat_node->data<ge::op::Concat>();
+  auto concat_node = graph->Add<hiai::op::Concat>(out_name);
+  auto concat_op = concat_node->data<hiai::op::Concat>();
   concat_op->set_attr_axis(axis);
   concat_op->set_attr_N(num);
   concat_op->create_dynamic_input_x(num);

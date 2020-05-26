@@ -50,8 +50,8 @@ int TopkConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   std::shared_ptr<Node> k_node = graph->Add<int>(out_name + "/k", k);
 
   // topk node
-  auto topk_node = graph->Add<ge::op::TopK>(out_name);
-  auto topk_op = topk_node->data<ge::op::TopK>();
+  auto topk_node = graph->Add<hiai::op::TopK>(out_name);
+  auto topk_op = topk_node->data<hiai::op::TopK>();
   topk_op->set_input_x(*x_node->data());
   topk_op->set_input_k(*k_node->data());
   topk_op->set_attr_format(0);

@@ -67,8 +67,8 @@ int BatchNormConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   auto variance_node = graph->Add(variance_name, *variance);
 
   // Batch Norm node
-  auto batch_norm_node = graph->Add<ge::op::BatchNormExt2>(y_name);
-  auto batch_norm_op = batch_norm_node->data<ge::op::BatchNormExt2>();
+  auto batch_norm_node = graph->Add<hiai::op::BatchNormExt2>(y_name);
+  auto batch_norm_op = batch_norm_node->data<hiai::op::BatchNormExt2>();
   batch_norm_op->set_input_x(*x_node->data());
   batch_norm_op->set_input_scale(*scale_node->data());
   batch_norm_op->set_input_offset(*bias_node->data());

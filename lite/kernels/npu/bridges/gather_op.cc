@@ -60,8 +60,8 @@ int GatherConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   }
 
   // Gather node
-  auto gather_node = graph->Add<ge::op::Gather>(out_name);
-  auto gather_op = gather_node->data<ge::op::Gather>();
+  auto gather_node = graph->Add<hiai::op::Gather>(out_name);
+  auto gather_op = gather_node->data<hiai::op::Gather>();
   gather_op->set_input_params(*x_node->data());
   gather_op->set_input_indices(*index_node->data());
 

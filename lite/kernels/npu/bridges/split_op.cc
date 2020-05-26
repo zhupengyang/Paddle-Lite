@@ -49,8 +49,8 @@ int SplitConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   }
 
   // Split node
-  auto split_node = graph->Add<ge::op::Split>(op_type + "/" + x_name);
-  auto split_op = split_node->data<ge::op::Split>();
+  auto split_node = graph->Add<hiai::op::Split>(op_type + "/" + x_name);
+  auto split_op = split_node->data<hiai::op::Split>();
   split_op->set_input_x(*x_node->data());
   split_op->set_attr_axis(static_cast<int64_t>(axis));
   if (num > 0) {
@@ -66,8 +66,8 @@ int SplitConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   for (auto& out_name : out_names) {
     auto zero_node =
         graph->Add(out_name + "/zero" + paddle::lite::to_string(idx), 0);
-    auto add_node = graph->Add<ge::op::Add>(out_name);
-    auto add_op = add_node->data<ge::op::Add>();
+    auto add_node = graph->Add<hiai::op::Add>(out_name);
+    auto add_op = add_node->data<hiai::op::Add>();
     add_op->set_input_x1(*split_node->data(),
                          "y" + paddle::lite::to_string(idx));
     add_op->set_input_x2(*zero_node->data());

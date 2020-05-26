@@ -48,8 +48,8 @@ std::shared_ptr<Node> Graph::Add(const std::string& name,
   PrecisionType precision = tensor.precision();
   if (tensor.persistable()) {
     // Const node
-    node = Add<ge::op::Const>(name, precision, layout);
-    node->data<ge::op::Const>()->set_attr_value(
+    node = Add<hiai::op::Const>(name, precision, layout);
+    node->data<hiai::op::Const>()->set_attr_value(
         CvtTensor(tensor, shape, layout));
   } else {
     // Data node
@@ -63,10 +63,10 @@ std::shared_ptr<Node> Graph::Add(const std::string& name,
                                  std::vector<int64_t> shape,
                                  PrecisionType precision,
                                  DataLayoutType layout) {
-  auto node = Add<ge::op::Data>(name, precision, layout);
+  auto node = Add<hiai::op::Data>(name, precision, layout);
   ge::TensorDesc desc(
       ge::Shape(shape), CvtDataLayoutType(layout), CvtPrecisionType(precision));
-  node->data<ge::op::Data>()->update_input_desc_x(desc);
+  node->data<hiai::op::Data>()->update_input_desc_x(desc);
   return node;
 }
 

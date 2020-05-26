@@ -54,8 +54,8 @@ int Pad2dConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   // Pad node
   auto mode = op_info->GetAttr<std::string>("mode");
   if (mode == "constant") {
-    auto pad2d_node = graph->Add<ge::op::PadV2>(out_name);
-    auto pad2d_op = pad2d_node->data<ge::op::PadV2>();
+    auto pad2d_node = graph->Add<hiai::op::PadV2>(out_name);
+    auto pad2d_op = pad2d_node->data<hiai::op::PadV2>();
     pad2d_op->set_input_x(*x_node->data());
     pad2d_op->set_input_paddings(*padding_node->data());
     // Pad value node
@@ -63,8 +63,8 @@ int Pad2dConverter(void* ctx, OpLite* op, KernelBase* kernel) {
     auto pad_value_node = graph->Add(out_name + "/pad_value", pad_value);
     pad2d_op->set_input_constant_values(*pad_value_node->data());
   } else {
-    auto pad2d_node = graph->Add<ge::op::Pad>(out_name);
-    auto pad2d_op = pad2d_node->data<ge::op::Pad>();
+    auto pad2d_node = graph->Add<hiai::op::Pad>(out_name);
+    auto pad2d_op = pad2d_node->data<hiai::op::Pad>();
     pad2d_op->set_input_x(*x_node->data());
     pad2d_op->set_input_padding(*padding_node->data());
     if (mode == "reflect") {

@@ -103,8 +103,8 @@ int PoolConverter(void* ctx, OpLite* op, KernelBase* kernel) {
       op_info->HasAttr("ceil_mode") && op_info->GetAttr<bool>("ceil_mode");
 
   // Pooling node
-  auto pool_node = graph->Add<ge::op::Pooling>(out_name);
-  auto pool_op = pool_node->data<ge::op::Pooling>();
+  auto pool_node = graph->Add<hiai::op::Pooling>(out_name);
+  auto pool_op = pool_node->data<hiai::op::Pooling>();
   pool_op->set_input_x(*x_node->data());
   pool_op->set_attr_mode(mode);
   pool_op->set_attr_pad_mode(pad_mode);

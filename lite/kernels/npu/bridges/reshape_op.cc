@@ -47,9 +47,9 @@ int ReshapeConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   }
 
   // Reshape node
-  auto reshape_node = graph->Add<ge::op::Reshape>(
+  auto reshape_node = graph->Add<hiai::op::Reshape>(
       out_name, x_node->precision(), x_node->layout());
-  auto reshape_op = reshape_node->data<ge::op::Reshape>();
+  auto reshape_op = reshape_node->data<hiai::op::Reshape>();
   reshape_op->set_input_tensor(*x_node->data());
 
   // Read shape from "ShapeTensor"(input), or "Shape"(input), or "shape"(attr)

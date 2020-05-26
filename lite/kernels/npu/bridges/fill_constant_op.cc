@@ -50,8 +50,8 @@ int FillConstantConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   auto value_node = graph->Add(out_name + "/value", std::vector<float>{value});
 
   // Fill node
-  auto fill_node = graph->Add<ge::op::Fill>(out_name);
-  auto fill_op = fill_node->data<ge::op::Fill>();
+  auto fill_node = graph->Add<hiai::op::Fill>(out_name);
+  auto fill_op = fill_node->data<hiai::op::Fill>();
   fill_op->set_input_dims(*dims_node->data());
   fill_op->set_input_value(*value_node->data());
 

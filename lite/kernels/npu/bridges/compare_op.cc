@@ -58,8 +58,8 @@ int LessThanConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   }
 
   // add node
-  auto less_than_node = graph->Add<ge::op::Less>(out_name, PRECISION(kBool));
-  auto less_than_op = less_than_node->data<ge::op::Less>();
+  auto less_than_node = graph->Add<hiai::op::Less>(out_name, PRECISION(kBool));
+  auto less_than_op = less_than_node->data<hiai::op::Less>();
   less_than_op->set_input_x1(*x_node->data());
   less_than_op->set_input_x2(*y_node->data());
 

@@ -46,9 +46,9 @@ int ShuffleChannelConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   }
 
   // Shuffle Channel node
-  auto shuffle_channel_node = graph->Add<ge::op::ShuffleChannel>(out_name);
+  auto shuffle_channel_node = graph->Add<hiai::op::ShuffleChannel>(out_name);
   auto shuffle_channel_op =
-      shuffle_channel_node->data<ge::op::ShuffleChannel>();
+      shuffle_channel_node->data<hiai::op::ShuffleChannel>();
   shuffle_channel_op->set_input_x(*x_node->data());
   shuffle_channel_op->set_attr_group(group);
   return SUCCESS;

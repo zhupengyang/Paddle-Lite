@@ -48,8 +48,8 @@ int UnsqueezeConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   }
 
   // Unsqueeze node
-  auto unsqueeze_node = graph->Add<ge::op::Reshape>(out_name);
-  auto unsqueeze_op = unsqueeze_node->data<ge::op::Reshape>();
+  auto unsqueeze_node = graph->Add<hiai::op::Reshape>(out_name);
+  auto unsqueeze_op = unsqueeze_node->data<hiai::op::Reshape>();
   unsqueeze_op->set_input_tensor(*x_node->data());
   unsqueeze_op->set_attr_shape(
       ge::AttrValue::LIST_INT(out_shape.begin(), out_shape.end()));

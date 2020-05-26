@@ -59,22 +59,22 @@ int LookupTableConverter(void* ctx, OpLite* op, KernelBase* kernel) {
 
   // reshape ids
   auto reshaped_index_node =
-      graph->Add<ge::op::Reshape>(index_name + "/reshape");
-  auto reshaped_index_op = reshaped_index_node->data<ge::op::Reshape>();
+      graph->Add<hiai::op::Reshape>(index_name + "/reshape");
+  auto reshaped_index_op = reshaped_index_node->data<hiai::op::Reshape>();
   reshaped_index_op->set_input_tensor(*index_node->data());
   reshaped_index_op->set_attr_shape(ge::AttrValue::LIST_INT({index->numel()}));
   reshaped_index_op->set_attr_axis(0);
   index_node = reshaped_index_node;
 
   // Gather node
-  auto gather_node = graph->Add<ge::op::Gather>(out_name);
-  auto gather_op = gather_node->data<ge::op::Gather>();
+  auto gather_node = graph->Add<hiai::op::Gather>(out_name);
+  auto gather_op = gather_node->data<hiai::op::Gather>();
   gather_op->set_input_params(*w_node->data());
   gather_op->set_input_indices(*index_node->data());
 
   // reshape out
-  auto reshaped_gather_node = graph->Add<ge::op::Reshape>(out_name);
-  auto reshaped_gather_op = reshaped_gather_node->data<ge::op::Reshape>();
+  auto reshaped_gather_node = graph->Add<hiai::op::Reshape>(out_name);
+  auto reshaped_gather_op = reshaped_gather_node->data<hiai::op::Reshape>();
   reshaped_gather_op->set_input_tensor(*gather_node->data());
   reshaped_gather_op->set_attr_shape(
       ge::AttrValue::LIST_INT(out_shape.begin(), out_shape.end()));

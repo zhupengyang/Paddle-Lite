@@ -57,8 +57,8 @@ int FCConverter(void* ctx, OpLite* op, KernelBase* kernel) {
     input_node = graph->Add(input_name, *input);
   }
   auto reshaped_input_node =
-      graph->Add<ge::op::Reshape>(input_name + "/reshape");
-  auto reshaped_input_op = reshaped_input_node->data<ge::op::Reshape>();
+      graph->Add<hiai::op::Reshape>(input_name + "/reshape");
+  auto reshaped_input_op = reshaped_input_node->data<hiai::op::Reshape>();
   reshaped_input_op->set_input_tensor(*input_node->data());
   reshaped_input_op->set_attr_shape({m, k, 1, 1});
   reshaped_input_op->set_attr_axis(0);
@@ -78,8 +78,8 @@ int FCConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   auto trans_w_node = graph->Add(w_name, transpose_w);
 
   // FC node
-  auto fc_node = graph->Add<ge::op::FullConnection>(out_name);
-  auto fc_op = fc_node->data<ge::op::FullConnection>();
+  auto fc_node = graph->Add<hiai::op::FullConnection>(out_name);
+  auto fc_op = fc_node->data<hiai::op::FullConnection>();
   fc_op->set_input_x(*reshaped_input_node->data());
   fc_op->set_input_w(*trans_w_node->data());
 
@@ -99,8 +99,8 @@ int FCConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   }
 
   // Reshape output of FC node from (m, n, 1, 1) to out_shape
-  auto reshaped_fc_node = graph->Add<ge::op::Reshape>(out_name);
-  auto reshaped_fc_op = reshaped_fc_node->data<ge::op::Reshape>();
+  auto reshaped_fc_node = graph->Add<hiai::op::Reshape>(out_name);
+  auto reshaped_fc_op = reshaped_fc_node->data<hiai::op::Reshape>();
   reshaped_fc_op->set_input_tensor(*fc_node->data());
   auto out_shape = out_dims.Vectorize();
   reshaped_fc_op->set_attr_shape(

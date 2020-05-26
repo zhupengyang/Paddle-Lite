@@ -48,8 +48,8 @@ int TransposeConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   }
 
   // Transpose node
-  auto transpose_node = graph->Add<ge::op::Permute>(out_name);
-  auto transpose_op = transpose_node->data<ge::op::Permute>();
+  auto transpose_node = graph->Add<hiai::op::Permute>(out_name);
+  auto transpose_op = transpose_node->data<hiai::op::Permute>();
   transpose_op->set_input_x(*x_node->data());
   auto w_node = graph->Add(out_name + "/w", 1.0f);
   transpose_op->set_input_w(*w_node->data());

@@ -104,8 +104,8 @@ int InstanceNormConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   }
 
   // InstanceNorm node
-  auto instance_norm_node = graph->Add<ge::op::InstanceNorm>(y_name);
-  auto instance_norm_op = instance_norm_node->data<ge::op::InstanceNorm>();
+  auto instance_norm_node = graph->Add<hiai::op::InstanceNorm>(y_name);
+  auto instance_norm_op = instance_norm_node->data<hiai::op::InstanceNorm>();
   instance_norm_op->set_input_x(*x_node->data());
   instance_norm_op->set_input_scale(*scale_node->data());
   instance_norm_op->set_input_bias(*bias_node->data());

@@ -68,8 +68,8 @@ int LayerNormConverter(void* ctx, OpLite* op, KernelBase* kernel) {
     }
     // Scale node
     x_name += "/scale";
-    auto scale_node = graph->Add<ge::op::Scale>(x_name);
-    auto scale_op = scale_node->data<ge::op::Scale>();
+    auto scale_node = graph->Add<hiai::op::Scale>(x_name);
+    auto scale_op = scale_node->data<hiai::op::Scale>();
     scale_op->set_input_x(*x_node->data());
     scale_op->set_attr_filler_value(scale);
   }
@@ -103,9 +103,9 @@ int LayerNormConverter(void* ctx, OpLite* op, KernelBase* kernel) {
     for (int i = 0; i < remain; i++) {
       padded_x_shape.push_back(1);
     }
-    auto reshaped_x_node = graph->Add<ge::op::Reshape>(
+    auto reshaped_x_node = graph->Add<hiai::op::Reshape>(
         x_name + "/reshape", x_node->precision(), x_node->layout());
-    auto reshaped_x_op = reshaped_x_node->data<ge::op::Reshape>();
+    auto reshaped_x_op = reshaped_x_node->data<hiai::op::Reshape>();
     reshaped_x_op->set_input_tensor(*x_node->data());
     reshaped_x_op->set_attr_shape(padded_x_shape);
     x_node = reshaped_x_node;
@@ -148,8 +148,8 @@ int LayerNormConverter(void* ctx, OpLite* op, KernelBase* kernel) {
   }
 
   // LayerNorm node
-  auto layer_norm_node = graph->Add<ge::op::InstanceNorm>(y_name);
-  auto layer_norm_op = layer_norm_node->data<ge::op::InstanceNorm>();
+  auto layer_norm_node = graph->Add<hiai::op::InstanceNorm>(y_name);
+  auto layer_norm_op = layer_norm_node->data<hiai::op::InstanceNorm>();
   layer_norm_op->set_input_x(*x_node->data());
   layer_norm_op->set_input_scale(*scale_node->data());
   layer_norm_op->set_input_bias(*bias_node->data());
@@ -158,9 +158,9 @@ int LayerNormConverter(void* ctx, OpLite* op, KernelBase* kernel) {
 
   // Reshaped Y node if needs
   if (reshape) {
-    auto reshaped_y_node = graph->Add<ge::op::Reshape>(
+    auto reshaped_y_node = graph->Add<hiai::op::Reshape>(
         y_name, layer_norm_node->precision(), layer_norm_node->layout());
-    auto reshaped_y_op = reshaped_y_node->data<ge::op::Reshape>();
+    auto reshaped_y_op = reshaped_y_node->data<hiai::op::Reshape>();
     reshaped_y_op->set_input_tensor(*layer_norm_node->data());
     reshaped_y_op->set_attr_shape(padded_y_shape);
   }
