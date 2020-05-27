@@ -406,6 +406,8 @@ bool SubgraphEngine::LaunchDeviceProgram() {
 
 void SubgraphCompute::PrepareForRun() {
   auto& param = this->Param<param_t>();
+  std::sort(param.input_data_names.begin(), param.input_data_names.end());
+  std::sort(param.output_data_names.begin(), param.output_data_names.end());
   engine_.reset(new SubgraphEngine(ctx_.get(),
                                    param.block_idx,
                                    param.program_desc,

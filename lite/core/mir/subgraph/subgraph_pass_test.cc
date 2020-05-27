@@ -171,7 +171,7 @@ void FillTransformerInput(
   init_score_tensor->SetLoD(trg_word_lod);
   auto init_score_data = init_score_tensor->mutable_data<float>();
   init_score_data[0] = 0.f;
-  init_score_data[0] = -1e6;
+  init_score_data[1] = pad_value;
 
   // init_idx (2) int32
   auto init_idx_tensor = predictor->GetInput(5);
@@ -192,7 +192,7 @@ void FillTransformerInput(
   for (int k = 0; k < max_out_len; k++) {
     for (int j = 0; j < n_head; j++) {
       for (int i = 0; i < max_out_len; i++) {
-        trg_slf_attn_bias_data[offset++] = (i <= k) ? 0.0f : -1e6f;
+        trg_slf_attn_bias_data[offset++] = (i <= k) ? 0.0f : pad_value;
       }
     }
   }
@@ -209,7 +209,7 @@ void FillTransformerInput(
       trg_src_attn_bias_data[offset++] = 0.0f;
     }
     for (int i = seq_len; i < max_seq_len; i++) {
-      trg_src_attn_bias_data[offset++] = -1e6f;
+      trg_src_attn_bias_data[offset++] = pad_value;
     }
   }
 
@@ -307,7 +307,7 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
   }
   for (int i = 0; i < FLAGS_repeats; i++) {
     // FillInputTensors(predictor, input_tensor_shape, input_tensor_type, i);
-    FillTransformerInput(predictor, inputs, 0);
+    FillTransformerInput(predictor, inputs, i);
     auto start = GetCurrentUS();
     predictor->Run();
     LOG(INFO) << i << ", " << GetCurrentUS() - start << "us";
@@ -364,7 +364,7 @@ TEST(Subgraph, generate_model_and_check_precision) {
 #endif
   });
 // Generate and run optimized model on CPU as the reference predictor
-#if 1
+#if 0
   auto ref_predictor = TestModel(FLAGS_model_dir,
                                  FLAGS_model_file,
                                  FLAGS_params_file,
