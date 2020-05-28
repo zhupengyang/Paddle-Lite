@@ -291,6 +291,8 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
   auto predictor = lite_api::CreatePaddlePredictor(cxx_config);
   predictor->SaveOptimizedModel(optimized_model_dir,
                                 lite_api::LiteModelType::kNaiveBuffer);
+  predictor = nullptr;
+
   // Load optimized model
   lite_api::MobileConfig mobile_config;
   mobile_config.set_model_from_file(optimized_model_dir + ".nb");
@@ -307,7 +309,7 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
   }
   for (int i = 0; i < FLAGS_repeats; i++) {
     // FillInputTensors(predictor, input_tensor_shape, input_tensor_type, i);
-    FillTransformerInput(predictor, inputs, i);
+    FillTransformerInput(predictor, inputs, 48);
     auto start = GetCurrentUS();
     predictor->Run();
     LOG(INFO) << i << ", " << GetCurrentUS() - start << "us";
@@ -364,7 +366,7 @@ TEST(Subgraph, generate_model_and_check_precision) {
 #endif
   });
 // Generate and run optimized model on CPU as the reference predictor
-#if 0
+#if 1
   auto ref_predictor = TestModel(FLAGS_model_dir,
                                  FLAGS_model_file,
                                  FLAGS_params_file,
