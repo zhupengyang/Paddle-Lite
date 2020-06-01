@@ -309,12 +309,12 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
   }
   for (int i = 0; i < FLAGS_repeats; i++) {
     // FillInputTensors(predictor, input_tensor_shape, input_tensor_type, i);
-    FillTransformerInput(predictor, inputs, 48);
+    FillTransformerInput(predictor, inputs, i);
     auto start = GetCurrentUS();
     predictor->Run();
     LOG(INFO) << i << ", " << GetCurrentUS() - start << "us";
 
-#if 1
+#if 0
     auto out_tensor_0 = predictor->GetOutput(0);
     auto out_data_0 = out_tensor_0->data<int64_t>();
     auto out_size_0 = ShapeProduction(out_tensor_0->shape());

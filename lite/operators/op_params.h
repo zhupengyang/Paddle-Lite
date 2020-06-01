@@ -922,6 +922,7 @@ struct LayerNormParam : ParamBase {
   lite::Tensor* Variance{};
   int begin_norm_axis{1};
   float epsilon{1e-5f};
+  std::string in_var_name{""};
 };
 
 struct LogicalParam : ParamBase {

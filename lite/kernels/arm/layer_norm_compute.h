@@ -32,6 +32,8 @@ class LayerNormCompute : public KernelLite<TARGET(kARM), PRECISION(kFloat)> {
   void Run() override;
 
   ~LayerNormCompute() {}
+
+  int repeat_num = 0;
 };
 
 }  // namespace arm

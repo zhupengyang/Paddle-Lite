@@ -42,6 +42,7 @@ bool LayerNormOp::InferShapeImpl() const {
 bool LayerNormOp::AttachImpl(const cpp::OpDesc &opdesc, lite::Scope *scope) {
   param_.X =
       scope->FindVar(opdesc.Input("X").front())->GetMutable<lite::Tensor>();
+  param_.in_var_name = opdesc.Input("X").front();
   param_.Y =
       scope->FindVar(opdesc.Output("Y").front())->GetMutable<lite::Tensor>();
   param_.Mean =

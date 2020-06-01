@@ -13,7 +13,10 @@
 // limitations under the License.
 
 #include "lite/kernels/arm/layer_norm_compute.h"
+#include <fstream>
+#include <string>
 #include "lite/backends/arm/math/funcs.h"
+#include "lite/utils/io.h"
 
 namespace paddle {
 namespace lite {
@@ -28,6 +31,23 @@ void LayerNormCompute::Run() {
   auto input_dims = param.X->dims();
 
   const auto* x_data = param.X->data<float>();
+  std::string in_var_name = param.in_var_name;
+  std::string dir = "/data/local/tmp/zpy/out/" + std::to_string(repeat_num);
+  std::string full_dir = "";
+  for (int i = 0; i < 8; i++) {
+    std::string tmp_dir =
+        dir + "/" + in_var_name + "_" + std::to_string(i) + ".txt";
+    if (!IsFileExists(tmp_dir)) {
+      full_dir = tmp_dir;
+      break;
+    }
+  }
+
+  std::ofstream fout(full_dir, std::ios::binary);
+  fout.write(reinterpret_cast<const char*>(x_data),
+             sizeof(float) * param.X->numel());
+  fout.close();
+
   const auto* scale = param.Scale ? param.Scale->data<float>() : nullptr;
   const auto* bias = param.Bias ? param.Bias->data<float>() : nullptr;
   auto* o_data = param.Y->mutable_data<float>();
