@@ -4,13 +4,13 @@ set +x
 # 1. global variables, you can change them according to your requirements
 #####################################################################################################
 # armv7 or armv8, default armv8.
-ARCH=armv8
+ARCH=armv7
 # c++_static or c++_shared, default c++_static.
 ANDROID_STL=c++_static
 # gcc or clang, default gcc.
 TOOLCHAIN=gcc
 # ON or OFF, default OFF.
-WITH_EXTRA=OFF
+WITH_EXTRA=ON
 # ON or OFF, default ON. 
 WITH_JAVA=ON
 # controls whether to compile cv functions into lib, default is OFF.
@@ -21,14 +21,14 @@ WITH_LOG=ON
 OPTMODEL_DIR=""
 WITH_STRIP=OFF
 # options of compiling NPU lib.
-WITH_HUAWEI_KIRIN_NPU=OFF
-HUAWEI_KIRIN_NPU_SDK_ROOT="$(pwd)/ai_ddk_lib/" # Download HiAI DDK from https://developer.huawei.com/consumer/cn/hiai/
+WITH_HUAWEI_KIRIN_NPU=ON
+HUAWEI_KIRIN_NPU_SDK_ROOT="../huawei/ai_ddk_lib_320-0527" # Download HiAI DDK from https://developer.huawei.com/consumer/cn/hiai/
 # options of compiling OPENCL lib.
 WITH_OPENCL=OFF
 # options of adding training ops
 WITH_TRAIN=OFF
 # num of threads used during compiling..
-readonly NUM_PROC=${LITE_BUILD_THREADS:-4}
+readonly NUM_PROC=$(expr $(nproc) - 2)
 #####################################################################################################
 
 
@@ -132,7 +132,7 @@ function make_tiny_publish_so {
 
   if [ -d $build_dir ]
   then
-      rm -rf $build_dir
+      rm -rf $build_dir/CM*
   fi
   mkdir -p $build_dir
   cd $build_dir
@@ -167,6 +167,7 @@ function make_tiny_publish_so {
   fi
 
   make publish_inference -j$NUM_PROC
+  tar czvf inference_lite_lib.android.armv7.npu/cxx.tgz inference_lite_lib.android.armv7.npu/cxx
   cd - > /dev/null
 }
 
@@ -269,6 +270,7 @@ function main {
     if [ -z "$1" ]; then
         # compiling result contains light_api lib only, recommanded.
         make_tiny_publish_so $ARCH $TOOLCHAIN $ANDROID_STL
+        exit
     fi
 
     # Parse command line.
