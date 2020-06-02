@@ -309,7 +309,7 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
   }
   for (int i = 0; i < FLAGS_repeats; i++) {
     // FillInputTensors(predictor, input_tensor_shape, input_tensor_type, i);
-    FillTransformerInput(predictor, inputs, 48);
+    FillTransformerInput(predictor, inputs, i);
     auto start = GetCurrentUS();
     predictor->Run();
     LOG(INFO) << i << ", " << GetCurrentUS() - start << "us";
@@ -366,7 +366,7 @@ TEST(Subgraph, generate_model_and_check_precision) {
 #endif
   });
 // Generate and run optimized model on CPU as the reference predictor
-#if 1
+#if 0
   auto ref_predictor = TestModel(FLAGS_model_dir,
                                  FLAGS_model_file,
                                  FLAGS_params_file,
