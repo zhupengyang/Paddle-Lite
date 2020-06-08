@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "lite/backends/npu/device.h"
+#include <algorithm>
 #include "lite/utils/cp_logging.h"
 #include "lite/utils/io.h"
 
@@ -21,7 +22,15 @@ namespace lite {
 namespace npu {
 
 std::shared_ptr<hiai::AiModelMngerClient> Device::Load(
-    const std::string& model_name, const std::vector<char>& model_buffer) {
+    const std::string& model_name,
+    const std::vector<char>& model_buffer,
+    std::string model_path) {
+  auto GetCurrentUS = []() -> double {
+    struct timeval time;
+    gettimeofday(&time, NULL);
+    return 1e+6 * time.tv_sec + time.tv_usec;
+  };
+  auto start_time = GetCurrentUS();
   // Create a HiAI model manager client to load the HiAI om model
   std::shared_ptr<hiai::AiModelMngerClient> model_client(
       new hiai::AiModelMngerClient());
@@ -33,6 +42,44 @@ std::shared_ptr<hiai::AiModelMngerClient> Device::Load(
       model_name, freq_level(), framework_type(), model_type(), device_type());
   model_desc->SetModelBuffer(reinterpret_cast<const void*>(model_buffer.data()),
                              model_buffer.size());
+
+  bool pisModelCompatibility = false;
+  auto p =
+      model_client->CheckModelCompatibility(*model_desc, pisModelCompatibility);
+  LOG(INFO) << "--- CheckModelCompatibility: " << p;
+  LOG(INFO) << "--- pisModelCompatibility: " << pisModelCompatibility;
+
+  static int k = 0;
+  if (p == hiai::AI_SUCCESS && !model_path.empty() && k < 2) {
+    k++;
+    LOG(INFO) << "[NPU] start rebuild om model";
+    std::shared_ptr<hiai::AiModelBuilder> ai_model_builder(nullptr);
+    hiai::MemBuffer* in_mem_buffer = ai_model_builder->InputMemBufferCreate(
+        reinterpret_cast<void*>(const_cast<char*>(model_buffer.data())),
+        model_buffer.size());
+    std::vector<hiai::MemBuffer*> in_mem_buffer_v{in_mem_buffer};
+    hiai::MemBuffer* out_mem_buffer =
+        ai_model_builder->OutputMemBufferCreate(0, in_mem_buffer_v);
+    uint32_t out_model_size = 0;
+    ai_model_builder->BuildModel(
+        in_mem_buffer_v, out_mem_buffer, out_model_size);
+
+    std::vector<char> model_buffer;
+    char* buffer_data = static_cast<char*>(out_mem_buffer->GetMemBufferData());
+    out_model_size = out_mem_buffer->GetMemBufferSize();
+    model_buffer.assign(buffer_data, buffer_data + out_model_size);
+    std::ofstream model_file(model_path.c_str(), std::ios::binary);
+    if (model_file.is_open()) {
+      std::copy(model_buffer.begin(),
+                model_buffer.end(),
+                std::ostreambuf_iterator<char>(model_file));
+      model_file.close();
+      LOG(INFO) << "[NPU] save rebuild om model done.";
+    } else {
+      LOG(WARNING) << "[NPU] Open " << model_path << " for writting failed!";
+    }
+  }
+
   std::vector<std::shared_ptr<hiai::AiModelDescription>> model_descs;
   model_descs.push_back(model_desc);
   if (model_client->Load(model_descs) != hiai::AI_SUCCESS) {
@@ -40,6 +87,7 @@ std::shared_ptr<hiai::AiModelMngerClient> Device::Load(
     return nullptr;
   }
   VLOG(3) << "[NPU] Load model done.";
+  LOG(INFO) << "[NPU] Load model cost " << GetCurrentUS() - start_time << " us";
   return model_client;
 }
 

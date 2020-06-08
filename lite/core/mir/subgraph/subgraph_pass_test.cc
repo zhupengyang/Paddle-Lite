@@ -281,17 +281,19 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
     const std::vector<std::vector<int64_t>>& input_tensor_shape,
     const std::vector<std::string>& input_tensor_type,
     const std::string& optimized_model_dir) {
-  // Generate optimized model
-  lite_api::CxxConfig cxx_config;
-  cxx_config.set_model_dir(model_dir);
-  cxx_config.set_model_file(model_file);
-  cxx_config.set_param_file(params_file);
-  cxx_config.set_valid_places(valid_places);
-  cxx_config.set_subgraph_model_cache_dir(FLAGS_subgraph_model_cache_dir);
-  auto predictor = lite_api::CreatePaddlePredictor(cxx_config);
-  predictor->SaveOptimizedModel(optimized_model_dir,
-                                lite_api::LiteModelType::kNaiveBuffer);
-  predictor = nullptr;
+  /*
+    // Generate optimized model
+    lite_api::CxxConfig cxx_config;
+    cxx_config.set_model_dir(model_dir);
+    cxx_config.set_model_file(model_file);
+    cxx_config.set_param_file(params_file);
+    cxx_config.set_valid_places(valid_places);
+    cxx_config.set_subgraph_model_cache_dir(FLAGS_subgraph_model_cache_dir);
+    auto predictor = lite_api::CreatePaddlePredictor(cxx_config);
+    predictor->SaveOptimizedModel(optimized_model_dir,
+                                  lite_api::LiteModelType::kNaiveBuffer);
+    predictor = nullptr;
+  */
 
   // Load optimized model
   lite_api::MobileConfig mobile_config;
@@ -299,7 +301,7 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
   mobile_config.set_power_mode(lite_api::PowerMode::LITE_POWER_HIGH);
   mobile_config.set_threads(1);
   //  mobile_config.set_subgraph_model_cache_dir(FLAGS_subgraph_model_cache_dir);
-  predictor = lite_api::CreatePaddlePredictor(mobile_config);
+  auto predictor = lite_api::CreatePaddlePredictor(mobile_config);
   std::vector<std::vector<int64_t>> inputs{};
   ReadInputFromFile(FLAGS_input_file, &inputs);
   // Run optimized model
@@ -340,6 +342,24 @@ std::shared_ptr<lite_api::PaddlePredictor> TestModel(
       SaveOut(std::move(out_tensor), dir);
     }
 #endif
+  }
+
+  predictor = lite_api::CreatePaddlePredictor(mobile_config);
+  for (int i = 0; i < FLAGS_repeats; i++) {
+    // FillInputTensors(predictor, input_tensor_shape, input_tensor_type, i);
+    FillTransformerInput(predictor, inputs, i);
+    auto start = GetCurrentUS();
+    predictor->Run();
+    LOG(INFO) << i << ", " << GetCurrentUS() - start << "us";
+  }
+
+  predictor = lite_api::CreatePaddlePredictor(mobile_config);
+  for (int i = 0; i < FLAGS_repeats; i++) {
+    // FillInputTensors(predictor, input_tensor_shape, input_tensor_type, i);
+    FillTransformerInput(predictor, inputs, i);
+    auto start = GetCurrentUS();
+    predictor->Run();
+    LOG(INFO) << i << ", " << GetCurrentUS() - start << "us";
   }
 
   return predictor;

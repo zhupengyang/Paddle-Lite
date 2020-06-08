@@ -86,7 +86,8 @@ bool RuntimeProgram::LoadFromCacheFile(
   std::vector<char> model_buffer((std::istreambuf_iterator<char>(model_file)),
                                  std::istreambuf_iterator<char>());
   model_file.close();
-  model_client_ = lite::npu::Device::Global().Load(model_name_, model_buffer);
+  model_client_ =
+      lite::npu::Device::Global().Load(model_name_, model_buffer, model_path);
   if (!model_client_) {
     LOG(WARNING) << "[NPU] Load model failed!";
     return false;
@@ -180,7 +181,8 @@ bool RuntimeProgram::BuildGraphAndCacheToFile(
   }
   // Load the HiAI om model and create a HiAI model manager client(from HiAI
   // Service) to run inference.
-  model_client_ = lite::npu::Device::Global().Load(model_name_, model_buffer);
+  model_client_ =
+      lite::npu::Device::Global().Load(model_name_, model_buffer, "");
   if (!model_client_) {
     LOG(WARNING) << "[NPU] Load model failed!";
     return false;

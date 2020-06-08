@@ -41,7 +41,9 @@ class Device {
   // Load the HiAI om model from buffer, and create a HiAI model manager
   // client(from HiAI Service) to run inference
   std::shared_ptr<hiai::AiModelMngerClient> Load(
-      const std::string& model_name, const std::vector<char>& model_buffer);
+      const std::string& model_name,
+      const std::vector<char>& model_buffer,
+      std::string model_path);
   // Build the HiAI IR graph to the HiAI om model
   bool Build(std::vector<ge::Operator>& input_nodes,   // NOLINT
              std::vector<ge::Operator>& output_nodes,  // NOLINT
