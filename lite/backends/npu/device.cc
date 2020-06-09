@@ -39,10 +39,18 @@ std::shared_ptr<hiai::AiModelMngerClient> Device::Load(
     LOG(WARNING) << "[NPU] AiModelMngerClient init failed!";
     return nullptr;
   }
+
+  // Create a HiAI model builder
+  std::shared_ptr<hiai::AiModelBuilder> ai_model_builder =
+      std::make_shared<hiai::AiModelBuilder>(model_client);
+  hiai::MemBuffer* in_mem_buffer = ai_model_builder->InputMemBufferCreate(
+      reinterpret_cast<void*>(const_cast<char*>(model_buffer.data())),
+      model_buffer.size());
+
   auto model_desc = std::make_shared<hiai::AiModelDescription>(
       model_name, freq_level(), framework_type(), model_type(), device_type());
-  model_desc->SetModelBuffer(reinterpret_cast<const void*>(model_buffer.data()),
-                             model_buffer.size());
+  model_desc->SetModelBuffer(in_mem_buffer->GetMemBufferData,
+                             in_mem_buffer->GetMemBufferSize);
 
   bool pisModelCompatibility = false;
   auto p =
@@ -50,15 +58,7 @@ std::shared_ptr<hiai::AiModelMngerClient> Device::Load(
   LOG(INFO) << "--- CheckModelCompatibility: " << p;
   LOG(INFO) << "--- pisModelCompatibility: " << pisModelCompatibility;
 
-  static int k = 0;
-  if (p == hiai::AI_SUCCESS && !model_path.empty() && k < 2) {
-    k++;
-    LOG(INFO) << "[NPU] start rebuild om model";
-    std::shared_ptr<hiai::AiModelBuilder> ai_model_builder =
-        std::make_shared<hiai::AiModelBuilder>(model_client);
-    hiai::MemBuffer* in_mem_buffer = ai_model_builder->InputMemBufferCreate(
-        reinterpret_cast<void*>(const_cast<char*>(model_buffer.data())),
-        model_buffer.size());
+  if (p == hiai::AI_SUCCESS && !model_path.empty()) {
     std::vector<hiai::MemBuffer*> in_mem_buffer_v{in_mem_buffer};
     hiai::MemBuffer* out_mem_buffer =
         ai_model_builder->OutputMemBufferCreate(0, in_mem_buffer_v);
