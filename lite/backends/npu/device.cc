@@ -59,8 +59,10 @@ std::shared_ptr<hiai::AiModelMngerClient> Device::Load(
   LOG(INFO) << "--- pisModelCompatibility: " << pisModelCompatibility;
 
   static int k = 0;
-  if (p == hiai::AI_SUCCESS && !model_path.empty() && k < 2) {
+  if (k < 2 && p == hiai::AI_SUCCESS && !pisModelCompatibility &&
+      !model_path.empty()) {
     k++;
+    LOG(INFO) << "[NPU] start rebuild om model";
     std::vector<hiai::MemBuffer*> in_mem_buffer_v{in_mem_buffer};
     hiai::MemBuffer* out_mem_buffer =
         ai_model_builder->OutputMemBufferCreate(0, in_mem_buffer_v);
@@ -74,21 +76,7 @@ std::shared_ptr<hiai::AiModelMngerClient> Device::Load(
     CHECK(ret == hiai::AI_SUCCESS);
     ai_model_builder->MemBufferDestroy(out_mem_buffer);
     ai_model_builder->MemBufferDestroy(in_mem_buffer);
-    // std::vector<char> model_buffer;
-    // char* buffer_data =
-    // static_cast<char*>(out_mem_buffer->GetMemBufferData());
-    // out_model_size = out_mem_buffer->GetMemBufferSize();
-    // model_buffer.assign(buffer_data, buffer_data + out_model_size);
-    // std::ofstream model_file(model_path.c_str(), std::ios::binary);
-    // if (model_file.is_open()) {
-    //   std::copy(model_buffer.begin(),
-    //             model_buffer.end(),
-    //             std::ostreambuf_iterator<char>(model_file));
-    //   model_file.close();
-    //   LOG(INFO) << "[NPU] save rebuild om model done.";
-    // } else {
-    //   LOG(WARNING) << "[NPU] Open " << model_path << " for writting failed!";
-    // }
+    LOG(INFO) << "[NPU] save rebuild om model done.";
   }
 
   std::vector<std::shared_ptr<hiai::AiModelDescription>> model_descs;
