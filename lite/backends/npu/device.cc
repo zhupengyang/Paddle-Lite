@@ -31,9 +31,10 @@ std::shared_ptr<hiai::AiModelMngerClient> Device::Load(
     return 1e+6 * time.tv_sec + time.tv_usec;
   };
   auto start_time = GetCurrentUS();
+
   // Create a HiAI model manager client to load the HiAI om model
-  std::shared_ptr<hiai::AiModelMngerClient> model_client(
-      new hiai::AiModelMngerClient());
+  std::shared_ptr<hiai::AiModelMngerClient> model_client =
+      std::make_shared<hiai::AiModelMngerClient>();
   if (model_client->Init(nullptr) != hiai::AI_SUCCESS) {
     LOG(WARNING) << "[NPU] AiModelMngerClient init failed!";
     return nullptr;
@@ -53,7 +54,8 @@ std::shared_ptr<hiai::AiModelMngerClient> Device::Load(
   if (p == hiai::AI_SUCCESS && !model_path.empty() && k < 2) {
     k++;
     LOG(INFO) << "[NPU] start rebuild om model";
-    std::shared_ptr<hiai::AiModelBuilder> ai_model_builder(nullptr);
+    std::shared_ptr<hiai::AiModelBuilder> ai_model_builder =
+        std::make_shared<hiai::AiModelBuilder>(model_client);
     hiai::MemBuffer* in_mem_buffer = ai_model_builder->InputMemBufferCreate(
         reinterpret_cast<void*>(const_cast<char*>(model_buffer.data())),
         model_buffer.size());
