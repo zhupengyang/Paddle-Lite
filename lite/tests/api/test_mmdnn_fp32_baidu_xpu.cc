@@ -61,12 +61,8 @@ void ReadRawDataMmdnn(const std::string& input_data_dir,
 
 float CalMmdnnOutAccuracy(const std::vector<float>& out,
                           const std::string& out_file) {
-  std::vector<std::string> lines = ReadLines(out_file);
-  std::vector<float> ref_out;
-  for (size_t i = 0; i < lines.size(); i++) {
-    ref_out.push_back(std::stof(lines[i]));
-  }
-  LOG(INFO) << "--- ref_out.size(): " << ref_out.size();
+  std::string ref_out_str = ReadFile(out_file);
+  std::vector<float> ref_out = Split<float>(ref_out_str, "\n");
 
   int right_num = 0;
   for (size_t i = 0; i < out.size(); i++) {
@@ -74,6 +70,7 @@ float CalMmdnnOutAccuracy(const std::vector<float>& out,
       right_num++;
     }
   }
+  LOG(INFO) << "--- wright_num: " << right_num;
 
   return static_cast<float>(right_num) / static_cast<float>(out.size());
 }
@@ -152,7 +149,7 @@ TEST(MMDNN, test_mmdnn_fp32_baidu_xpu) {
             << cost_time / FLAGS_iteration / 1000.0 << " ms in average.";
 
   std::string ref_out_file =
-      FLAGS_data_dir + std::string("/res_for_crmm_0608.txt");
+      FLAGS_data_dir + std::string("/res_for_crmm_0608.txt.small");
   float out_accuracy = CalMmdnnOutAccuracy(out_rets, ref_out_file);
   ASSERT_GT(out_accuracy, 0.95f);
 }
