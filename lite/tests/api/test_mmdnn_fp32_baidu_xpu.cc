@@ -122,6 +122,7 @@ TEST(MMDNN, test_mmdnn_fp32_baidu_xpu) {
 
     for (int i = 0; i < FLAGS_batch; i++) {
       out_rets.push_back(output_data[i]);
+      LOG(INFO) << "--- res: output_data[i]";
     }
   }
 
