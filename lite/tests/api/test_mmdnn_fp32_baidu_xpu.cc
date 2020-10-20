@@ -61,8 +61,11 @@ void ReadRawDataMmdnn(const std::string& input_data_dir,
 
 float CalMmdnnOutAccuracy(const std::vector<float>& out,
                           const std::string& out_file) {
-  std::string ref_out_str = ReadFile(out_file);
-  std::vector<float> ref_out = Split<float>(ref_out_str, "\n");
+  std::vector<std::string> lines = ReadLines(out_file);
+  std::vector<float> ref_out;
+  for (size_t i = 0; i < lines.size(); i++) {
+    ref_out.push_back(std::stof(lines[i]));
+  }
   LOG(INFO) << "--- ref_out.size(): " << ref_out.size();
 
   int right_num = 0;
