@@ -393,7 +393,7 @@ function build_test_xpu {
         -DXPU_SDK_ROOT="./output"
     make lite_compile_deps -j$NUM_CORES_FOR_COMPILE
 
-    test_xpu
+    #test_xpu
 }
 
 function is_available_adb_device {

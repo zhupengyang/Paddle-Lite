@@ -53,6 +53,8 @@ if(LITE_WITH_NPU)
     lite_cc_test_with_model_and_data(test_resnet50_fp32_huawei_kirin_npu MODEL resnet50 DATA ILSVRC2012_small)
 endif()
 
+lite_cc_test_with_model_and_data(test_resnet50_fp32_baidu_xpu MODEL resnet50 DATA ILSVRC2012_small)
+
 if(LITE_WITH_XPU AND NOT LITE_WITH_XTCL)
     lite_cc_test_with_model_and_data(test_bert_fp32_baidu_xpu MODEL bert DATA bert_data)
     lite_cc_test_with_model_and_data(test_ernie_fp32_baidu_xpu MODEL ernie DATA bert_data)
