@@ -16,20 +16,17 @@
 #include <utility>
 #include <vector>
 #include "lite/core/mir/pass_registry.h"
-// #include "lite/core/program.h"
 
 namespace paddle {
 namespace lite {
 namespace mir {
 
 void WeightToDevicePass::Apply(const std::unique_ptr<SSAGraph>& graph) {
-  // std::list<Node*> nodes;
-  std::vector<Instruction> insts;
   for (auto& node : graph->StmtTopologicalOrder()) {
-    if (node->IsStmt() && node->AsStmt().op_type() == "io_copy_once") {
-      auto stmt = node->AsStmt();
-      stmt.op()->InferShape();
-      stmt.kernels().front()->Launch();
+    if (node->IsStmt() && node->stmt()->op_type() == "io_copy_once") {
+      auto stmt = node->stmt();
+      stmt->op()->InferShape();
+      stmt->kernels().front()->Launch();
     }
   }
 }
