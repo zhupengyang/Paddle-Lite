@@ -172,9 +172,9 @@ class Optimizer {
          "argument_type_display_pass",
          "lite_reshape_fuse_pass",
 #if !(defined(LITE_WITH_FPGA) || defined(LITE_WITH_PRECISION_PROFILE))
-         "memory_optimize_pass"
+         "memory_optimize_pass",
 #endif
-        }};
+         "weight_to_device_pass"}};
 
     // multi_stream_analysis_pass must be in the front of
     // runtime_context_assign_pass
