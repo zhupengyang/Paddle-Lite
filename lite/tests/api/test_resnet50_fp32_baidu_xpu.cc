@@ -14,6 +14,7 @@
 
 #include <gflags/gflags.h>
 #include <gtest/gtest.h>
+#include <thread>  // NOLINT
 #include <vector>
 #include "lite/api/lite_api_test_helper.h"
 #include "lite/api/paddle_api.h"
@@ -31,6 +32,10 @@ DEFINE_int32(channel, 3, "image channel");
 
 namespace paddle {
 namespace lite {
+
+void ModelRun(std::shared_ptr<lite_api::PaddlePredictor> predictor) {
+  predictor->Run();
+}
 
 TEST(Resnet50, test_resnet50_fp32_baidu_xpu) {
   lite_api::CxxConfig config;
@@ -51,7 +56,9 @@ TEST(Resnet50, test_resnet50_fp32_baidu_xpu) {
     input_size *= i;
   }
 
-  for (int i = 0; i < FLAGS_warmup; ++i) {
+  for (int i = 0; i < 50; ++i) {
+    auto predictor_1 = predictor->Clone();
+
     auto input_tensor = predictor->GetInput(0);
     input_tensor->Resize(
         std::vector<int64_t>(input_shape.begin(), input_shape.end()));
@@ -59,8 +66,23 @@ TEST(Resnet50, test_resnet50_fp32_baidu_xpu) {
     for (int j = 0; j < input_size; j++) {
       data[j] = 0.f;
     }
-    predictor->Run();
+
+    auto input_tensor_1 = predictor_1->GetInput(0);
+    input_tensor_1->Resize(
+        std::vector<int64_t>(input_shape.begin(), input_shape.end()));
+    auto* data_1 = input_tensor_1->mutable_data<float>();
+    for (int j = 0; j < input_size; j++) {
+      data_1[j] = 0.f;
+    }
+
+    std::thread run_th0(ModelRun, predictor);
+    std::thread run_th1(ModelRun, predictor_1);
+
+    run_th0.join();
+    run_th1.join();
   }
+
+  return;
 
   std::vector<std::vector<float>> out_rets;
   out_rets.resize(FLAGS_iteration);
