@@ -25,10 +25,55 @@
 #include "lite/utils/cp_logging.h"
 
 DEFINE_string(data_dir, "", "data dir");
-DEFINE_int32(iteration, 9, "iteration times to run");
+DEFINE_int32(iteration, 100, "iteration times to run");
 
 namespace paddle {
 namespace lite {
+
+template <class T = int64_t>
+void ReadRank12RawData(const std::string& input_data_dir,
+                       std::vector<std::vector<T>>* input0,
+                       std::vector<std::vector<T>>* input1,
+                       std::vector<std::vector<T>>* input2,
+                       std::vector<std::vector<float>>* input3,
+                       std::vector<std::vector<int64_t>>* input_shapes) {
+  auto lines = ReadLines(input_data_dir);
+  for (auto line : lines) {
+    std::vector<std::string> shape_and_data = Split(line, ";");
+    std::vector<int64_t> input_shape =
+        Split<int64_t>(Split(shape_and_data[0], ",,")[1], " ");
+    input_shapes->emplace_back(input_shape);
+
+    std::vector<T> input0_data =
+        Split<T>(Split(shape_and_data[0], ",,")[2], " ");
+    input0->emplace_back(input0_data);
+    std::vector<T> input1_data =
+        Split<T>(Split(shape_and_data[1], ",,")[2], " ");
+    input1->emplace_back(input1_data);
+    std::vector<T> input2_data =
+        Split<T>(Split(shape_and_data[2], ",,")[2], " ");
+    input2->emplace_back(input2_data);
+    std::vector<float> input3_data =
+        Split<float>(Split(shape_and_data[3], ",,")[2], " ");
+    input3->emplace_back(input3_data);
+  }
+}
+
+float CalRank12OutAccuracy(const std::vector<float>& out,
+                           const std::string& out_file) {
+  auto lines = ReadLines(out_file);
+  std::vector<float> ref_out;
+  for (auto line : lines) {
+    ref_out.emplace_back(std::stof(line));
+  }
+
+  int right_num = 0;
+  for (size_t i = 0; i < out.size(); i++) {
+    right_num += (std::fabs(out[i] - ref_out[i]) < 0.01f);
+  }
+
+  return static_cast<float>(right_num) / static_cast<float>(out.size());
+}
 
 template <typename T>
 lite::Tensor GetTensorWithShape(std::vector<int64_t> shape) {
@@ -50,13 +95,14 @@ TEST(Ernie, test_ernie_fp32_baidu_xpu) {
   config.set_xpu_workspace_l3_size_per_thread();
   auto predictor = lite_api::CreatePaddlePredictor(config);
 
-  std::string input_data_file = FLAGS_data_dir + std::string("/bert_in.txt");
+  std::string input_data_file =
+      FLAGS_data_dir + std::string("/ras_ernie_L12_input_data.init");
   std::vector<std::vector<int64_t>> input0;
   std::vector<std::vector<int64_t>> input1;
   std::vector<std::vector<int64_t>> input2;
-  std::vector<std::vector<int64_t>> input3;
+  std::vector<std::vector<float>> input3;
   std::vector<std::vector<int64_t>> input_shapes;
-  ReadRawData(
+  ReadRank12RawData(
       input_data_file, &input0, &input1, &input2, &input3, &input_shapes);
 
   for (int i = 0; i < FLAGS_warmup; ++i) {
@@ -68,8 +114,8 @@ TEST(Ernie, test_ernie_fp32_baidu_xpu) {
     predictor->Run();
   }
 
-  std::vector<std::vector<float>> out_rets;
-  out_rets.resize(FLAGS_iteration);
+  std::vector<float> out_rets;
+  // out_rets.resize(FLAGS_iteration);
   double cost_time = 0;
   for (int i = 0; i < FLAGS_iteration; ++i) {
     FillTensor(predictor, 0, input_shapes[i], input0[i]);
@@ -85,12 +131,14 @@ TEST(Ernie, test_ernie_fp32_baidu_xpu) {
     auto output_shape = output_tensor->shape();
     auto output_data = output_tensor->data<float>();
     ASSERT_EQ(output_shape.size(), 2UL);
-    ASSERT_EQ(output_shape[0], 1);
+    ASSERT_EQ(output_shape[0], input_shapes[i][0]);
     ASSERT_EQ(output_shape[1], 1);
 
-    int output_size = output_shape[0] * output_shape[1];
-    out_rets[i].resize(output_size);
-    memcpy(&(out_rets[i].at(0)), output_data, sizeof(float) * output_size);
+    size_t output_size = output_shape[0] * output_shape[1];
+    out_rets.resize(out_rets.size() + output_size);
+    memcpy(&(out_rets.at(out_rets.size() - output_size)),
+           output_data,
+           sizeof(float) * output_size);
   }
 
   LOG(INFO) << "================== Speed Report ===================";
@@ -99,8 +147,10 @@ TEST(Ernie, test_ernie_fp32_baidu_xpu) {
             << ", iteration: " << FLAGS_iteration << ", spend "
             << cost_time / FLAGS_iteration / 1000.0 << " ms in average.";
 
-  std::string ref_out_file = FLAGS_data_dir + std::string("/ernie_out.txt");
-  float out_accuracy = CalErnieOutAccuracy(out_rets, ref_out_file);
+  std::string ref_out_file =
+      FLAGS_data_dir + std::string("/ras_ernie_L12_output_data");
+  float out_accuracy = CalRank12OutAccuracy(out_rets, ref_out_file);
+  LOG(INFO) << "--- out_accuracy: " << out_accuracy;
   ASSERT_GT(out_accuracy, 0.95f);
 }
 
