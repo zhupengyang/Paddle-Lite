@@ -406,6 +406,8 @@ void CxxConfig::set_preferred_inputs_for_warmup(const int group_idx,
   auto input_tensor =
       static_cast<lite::Tensor *>(input_tensors[tensor_idx].get());
   input_tensor->Resize(shape);
+  LOG(INFO) << "--- input_tensor->dims().Vectorize().size(): "
+            << input_tensor->dims().Vectorize().size();
   input_tensor->set_lod(lod);
   auto input_data = input_tensor->mutable_data<T>();
   int64_t size = std::accumulate(

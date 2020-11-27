@@ -119,6 +119,7 @@ void CxxPaddleApiImpl::Init(const lite_api::CxxConfig &config) {
 #endif
 
   auto preferred_inputs = config.preferred_inputs_for_warmup();
+  LOG(INFO) << "--- preferred_inputs.size(): " << preferred_inputs.size();
   for (auto &preferred_input : preferred_inputs) {
     auto &input_tensors = preferred_input.second;
     if (input_tensors.empty()) continue;
@@ -139,11 +140,6 @@ void CxxPaddleApiImpl::Init(const lite_api::CxxConfig &config) {
           memcpy(in_tensor->mutable_data<float>(),
                  input_tensor->data<float>(),
                  sizeof(float) * size);
-          break;
-        case lite_api::PrecisionType::kFP64:
-          memcpy(in_tensor->mutable_data<double>(),
-                 input_tensor->data<double>(),
-                 sizeof(double) * size);
           break;
         case lite_api::PrecisionType::kInt32:
           memcpy(in_tensor->mutable_data<int32_t>(),
