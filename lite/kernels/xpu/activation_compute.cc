@@ -154,6 +154,17 @@ void SignCompute::Run() {
   CHECK_EQ(r, 0);
 }
 
+void SoftsignCompute::Run() {
+  auto& param = this->Param<param_t>();
+  auto& ctx = this->ctx_->As<XPUContext>();
+
+  int r = xdnn::softsign(ctx.GetRawContext(),
+                         param.X->data<float>(),
+                         param.Out->mutable_data<float>(TARGET(kXPU)),
+                         param.X->numel());
+  CHECK_EQ(r, 0);
+}
+
 }  // namespace xpu
 }  // namespace kernels
 }  // namespace lite
@@ -161,6 +172,12 @@ void SignCompute::Run() {
 
 REGISTER_LITE_KERNEL(
     relu, kXPU, kFloat, kNCHW, paddle::lite::kernels::xpu::ReluCompute, def)
+    .BindInput("X", {LiteType::GetTensorTy(TARGET(kXPU))})
+    .BindOutput("Out", {LiteType::GetTensorTy(TARGET(kXPU))})
+    .Finalize();
+
+REGISTER_LITE_KERNEL(
+    relu6, kXPU, kFloat, kNCHW, paddle::lite::kernels::xpu::Relu6Compute, def)
     .BindInput("X", {LiteType::GetTensorTy(TARGET(kXPU))})
     .BindOutput("Out", {LiteType::GetTensorTy(TARGET(kXPU))})
     .Finalize();
@@ -222,6 +239,16 @@ REGISTER_LITE_KERNEL(reciprocal,
                      kFloat,
                      kNCHW,
                      paddle::lite::kernels::xpu::ReciprocalCompute,
+                     def)
+    .BindInput("X", {LiteType::GetTensorTy(TARGET(kXPU))})
+    .BindOutput("Out", {LiteType::GetTensorTy(TARGET(kXPU))})
+    .Finalize();
+
+REGISTER_LITE_KERNEL(softsign,
+                     kXPU,
+                     kFloat,
+                     kNCHW,
+                     paddle::lite::kernels::xpu::SoftsignCompute,
                      def)
     .BindInput("X", {LiteType::GetTensorTy(TARGET(kXPU))})
     .BindOutput("Out", {LiteType::GetTensorTy(TARGET(kXPU))})
