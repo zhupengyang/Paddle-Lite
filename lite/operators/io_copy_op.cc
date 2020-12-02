@@ -27,13 +27,16 @@ bool IoCopyOp::CheckShape() const {
 bool IoCopyOp::InferShapeImpl() const {
   param_.y->Resize(param_.x->dims());
   param_.y->set_lod(param_.x->lod());
+  LOG(INFO) << "--- io_copy, x_name: " << x_name << ", y_name: " << y_name;
   return true;
 }
 bool IoCopyOp::Run() { return OpLite::Run(); }
 bool IoCopyOp::AttachImpl(const cpp::OpDesc &opdesc,
                           paddle::lite::Scope *scope) {
   auto x = opdesc.Input("Input").front();
+  x_name = x;
   auto out = opdesc.Output("Out").front();
+  y_name = out;
   param_.x = GetTensor(scope, x);
   param_.y = GetMutableTensor(scope, out);
   if (opdesc.HasAttr("process_type")) {

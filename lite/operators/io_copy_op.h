@@ -45,6 +45,8 @@ class IoCopyOp : public OpLite {
 
  private:
   operators::IoCopyParam param_;
+  std::string x_name;
+  std::string y_name;
 };
 
 }  // namespace operators
