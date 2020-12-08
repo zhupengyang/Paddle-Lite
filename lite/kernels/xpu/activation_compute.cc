@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "lite/kernels/xpu/activation_compute.h"
+#include "lite/backends/xpu/target_wrapper.h"
 #include "lite/backends/xpu/xpu_header_sitter.h"
 #include "lite/core/op_registry.h"
 
@@ -52,6 +53,16 @@ void TanhCompute::Run() {
                      param.Out->mutable_data<float>(TARGET(kXPU)),
                      param.X->numel());
   CHECK_EQ(r, 0);
+
+  Tensor tmp;
+  tmp.Resize(param.Out->dims());
+  auto tmp_data = tmp.mutable_data<float>();
+  TargetWrapperXPU::MemcpySync(tmp_data,
+                               param.Out->raw_data(),
+                               sizeof(float) * param.Out->numel(),
+                               IoDirection::DtoH);
+  LOG(INFO) << "--- tanh out: " << tmp_data[0] << ", " << tmp_data[1] << ", "
+            << tmp_data[2] << ", ";
 }
 
 void SigmoidCompute::Run() {
@@ -195,6 +206,16 @@ void SoftsignCompute::Run() {
                          param.Out->mutable_data<float>(TARGET(kXPU)),
                          param.X->numel());
   CHECK_EQ(r, 0);
+
+  Tensor tmp;
+  tmp.Resize(param.Out->dims());
+  auto tmp_data = tmp.mutable_data<float>();
+  TargetWrapperXPU::MemcpySync(tmp_data,
+                               param.Out->raw_data(),
+                               sizeof(float) * param.Out->numel(),
+                               IoDirection::DtoH);
+  LOG(INFO) << "--- softsign out: " << tmp_data[0] << ", " << tmp_data[1]
+            << ", " << tmp_data[2] << ", ";
 }
 
 }  // namespace xpu

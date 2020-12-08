@@ -35,10 +35,14 @@ class XPUFcOp : public OpLite {
 
   void AttachKernel(KernelBase *kernel) override { kernel->SetParam(param_); }
 
-  std::string DebugString() const override { return "XPUFc"; }
+  std::string DebugString() const override {
+    LOG(INFO) << "--- fc out name: " << out_name;
+    return "XPUFc";
+  }
 
  private:
   mutable XPUFcParam param_;
+  std::string out_name;
 };
 
 }  // namespace operators

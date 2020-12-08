@@ -14,6 +14,7 @@
 
 #include "lite/kernels/xpu/concat_compute.h"
 #include <vector>
+#include "lite/backends/xpu/target_wrapper.h"
 #include "lite/backends/xpu/xpu_header_sitter.h"
 #include "lite/core/op_registry.h"
 
@@ -40,6 +41,22 @@ void ConcatCompute::Run() {
     x_list.push_back(ins[i]->data<float>());
   }
 
+  for (size_t i = 0; i < x_list.size(); i++) {
+    Tensor tmp;
+    tmp.Resize(ins[i]->dims());
+    auto tmp_data = tmp.mutable_data<float>();
+    TargetWrapperXPU::MemcpySync(tmp_data,
+                                 ins[i]->raw_data(),
+                                 sizeof(float) * ins[i]->numel(),
+                                 IoDirection::DtoH);
+    float sum = 0.;
+    for (int64_t j = 0; j < ins[i]->numel(); j++) {
+      sum += tmp_data[j];
+    }
+    LOG(INFO) << "--- concat in " << i << " : " << tmp_data[0] << ", "
+              << tmp_data[1] << ", " << tmp_data[2] << ", sum: " << sum;
+  }
+
   int r = xdnn::concat<float>(ctx.GetRawContext(),
                               x_list,
                               out->mutable_data<float>(TARGET(kXPU)),
@@ -47,6 +64,16 @@ void ConcatCompute::Run() {
                               axis);
 
   CHECK_EQ(r, 0);
+
+  Tensor tmp;
+  tmp.Resize(param.output->dims());
+  auto tmp_data = tmp.mutable_data<float>();
+  TargetWrapperXPU::MemcpySync(tmp_data,
+                               param.output->raw_data(),
+                               sizeof(float) * param.output->numel(),
+                               IoDirection::DtoH);
+  LOG(INFO) << "--- concat out: " << tmp_data[0] << ", " << tmp_data[1] << ", "
+            << tmp_data[2] << ", ";
 }
 
 }  // namespace xpu

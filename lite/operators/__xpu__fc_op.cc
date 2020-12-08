@@ -73,6 +73,7 @@ bool XPUFcOp::AttachImpl(const cpp::OpDesc& op_desc, lite::Scope* scope) {
   auto input = op_desc.Input("Input").front();
   auto W = op_desc.Input("W").front();
   auto out = op_desc.Output("Out").front();
+  out_name = out;
 
   param_.input = scope->FindVar(input)->GetMutable<lite::Tensor>();
   param_.w = scope->FindVar(W)->GetMutable<lite::Tensor>();

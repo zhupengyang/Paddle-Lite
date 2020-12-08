@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "lite/kernels/xpu/layer_norm_compute.h"
+#include "lite/backends/xpu/target_wrapper.h"
 #include "lite/backends/xpu/xpu_header_sitter.h"
 #include "lite/core/op_registry.h"
 
@@ -39,6 +40,16 @@ void LayerNormCompute::Run() {
                            param.Bias->data<float>(),  /* bias */
                            epsilon /* epsilon */);
   CHECK_EQ(r, 0);
+
+  Tensor tmp;
+  tmp.Resize(param.Y->dims());
+  auto tmp_data = tmp.mutable_data<float>();
+  TargetWrapperXPU::MemcpySync(tmp_data,
+                               param.Y->raw_data(),
+                               sizeof(float) * param.Y->numel(),
+                               IoDirection::DtoH);
+  LOG(INFO) << "--- layer_norm out: " << tmp_data[0] << ", " << tmp_data[1]
+            << ", " << tmp_data[2] << ", ";
 }
 
 }  // namespace xpu

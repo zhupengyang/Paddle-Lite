@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include "lite/core/context.h"
 #include "lite/model_parser/cpp_desc.h"
 #include "lite/operators/conditional_block_op.h"
 #include "lite/operators/subgraph_op.h"
@@ -448,9 +449,19 @@ void Instruction::Run() {
     return;
   }
 
+  LOG(INFO) << "+++ op: " << op_->DebugString();
+  if (!first_epoch_) {
+    LOG(INFO) << "before op run";
+    XPUContext::Debug();
+  }
   op_->InferShape();
   kernel_->Launch();
   has_run_ = true;
+
+  if (!first_epoch_) {
+    LOG(INFO) << "after op run";
+    XPUContext::Debug();
+  }
 
 #ifdef LITE_WITH_PROFILE
   if (first_epoch_for_profiler_) {

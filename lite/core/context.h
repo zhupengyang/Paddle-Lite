@@ -203,6 +203,24 @@ class Context<TargetType::kXPU> {
   }
 
   std::string name() const { return "XPUContext"; }
+
+  static void Debug() {
+    if (w == nullptr) {
+      return;
+    }
+    Tensor tmp;
+    tmp.Resize({36});
+    auto tmp_data = tmp.mutable_data<float>();
+    TargetWrapperXPU::MemcpySync(
+        tmp_data, w, sizeof(float) * 36, IoDirection::DtoH);
+    float sum = 0.f;
+    for (int64_t i = 0; i < 36; i++) {
+      sum += tmp_data[i];
+    }
+    LOG(INFO) << "--- mul w[0]: " << tmp_data[0] << ", w[1]: " << tmp_data[1]
+              << ", w[2]: " << tmp_data[2] << ", sum: " << sum;
+  }
+  static void* w;
 };
 #endif
 

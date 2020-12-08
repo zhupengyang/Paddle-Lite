@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "lite/kernels/xpu/slice_compute.h"
+#include "lite/backends/xpu/target_wrapper.h"
 #include "lite/backends/xpu/xpu_header_sitter.h"
 #include "lite/core/op_registry.h"
 
@@ -55,6 +56,16 @@ void SliceCompute::Run() {
       param.X->data<float>(), /* in */
       param.Out->mutable_data<float>(TARGET(kXPU)) /* out */);
   CHECK_EQ(r, 0);
+
+  Tensor tmp;
+  tmp.Resize(param.Out->dims());
+  auto tmp_data = tmp.mutable_data<float>();
+  TargetWrapperXPU::MemcpySync(tmp_data,
+                               param.Out->raw_data(),
+                               sizeof(float) * param.Out->numel(),
+                               IoDirection::DtoH);
+  LOG(INFO) << "--- slice out: " << tmp_data[0] << ", " << tmp_data[1] << ", "
+            << tmp_data[2] << ", ";
 }
 
 }  // namespace xpu

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "lite/kernels/xpu/__xpu__fc_compute.h"
+#include "lite/backends/xpu/target_wrapper.h"
 #include "lite/backends/xpu/xpu_header_sitter.h"
 #include "lite/core/op_registry.h"
 
@@ -51,6 +52,36 @@ void XPUFcCompute::Run() {
       bias,                                                     /* bias */
       act_type /* act_type */);
   CHECK_EQ(r, 0);
+
+  {
+    Tensor tmp;
+    tmp.Resize(param.input->dims());
+    auto tmp_data = tmp.mutable_data<float>();
+    TargetWrapperXPU::MemcpySync(tmp_data,
+                                 param.input->raw_data(),
+                                 sizeof(float) * param.input->numel(),
+                                 IoDirection::DtoH);
+    LOG(INFO) << "--- fc in: " << tmp_data[0] << ", " << tmp_data[1] << ", "
+              << tmp_data[2] << ", ";
+
+    float sum = 0.f;
+    for (int64_t i = 0; i < param.input->numel(); i++) {
+      sum += tmp_data[i];
+    }
+    LOG(INFO) << "--- fc in sum: " << sum;
+  }
+
+  {
+    Tensor tmp;
+    tmp.Resize(param.output->dims());
+    auto tmp_data = tmp.mutable_data<float>();
+    TargetWrapperXPU::MemcpySync(tmp_data,
+                                 param.output->raw_data(),
+                                 sizeof(float) * param.output->numel(),
+                                 IoDirection::DtoH);
+    LOG(INFO) << "--- fc out: " << tmp_data[0] << ", " << tmp_data[1] << ", "
+              << tmp_data[2] << ", ";
+  }
 }
 
 }  // namespace xpu

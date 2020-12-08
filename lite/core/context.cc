@@ -33,5 +33,9 @@ std::map<int, int> Context<TargetType::kMLU>::queue_id_map_;
 std::mutex Context<TargetType::kMLU>::map_mutex_;
 #endif
 
+#ifdef LITE_WITH_XPU
+void* Context<TargetType::kXPU>::w{nullptr};
+#endif
+
 }  // namespace lite
 }  // namespace paddle

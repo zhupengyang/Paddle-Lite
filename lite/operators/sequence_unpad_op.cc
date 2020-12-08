@@ -25,9 +25,9 @@ bool SequenceUnpadOp::CheckShape() const {
   CHECK_OR_FALSE(param_.Out);
   auto x_dims = param_.X->dims();
   auto len_dims = param_.Length->dims();
-  CHECK(x_dims.size() >= 2) << "Rank of X can't be less than 2";
-  CHECK(len_dims.size() == 1) << "Rank of Length should be 1";
-  CHECK(x_dims[0] == len_dims[0])
+  CHECK_GE(x_dims.size(), 2) << "Rank of X can't be less than 2";
+  CHECK_EQ(len_dims.size(), 1) << "Rank of Length should be 1";
+  CHECK_EQ(x_dims[0], len_dims[0])
       << "X and Length should have the same 1st dim";
   return true;
 }

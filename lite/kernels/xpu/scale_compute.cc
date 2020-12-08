@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "lite/kernels/xpu/scale_compute.h"
+#include "lite/backends/xpu/target_wrapper.h"
 #include "lite/backends/xpu/xpu_header_sitter.h"
 #include "lite/core/op_registry.h"
 
@@ -35,6 +36,16 @@ void ScaleCompute::Run() {
                       param.x->data<float>(), /* x */
                       param.output->mutable_data<float>(TARGET(kXPU)) /* y */);
   CHECK_EQ(r, 0);
+
+  Tensor tmp;
+  tmp.Resize(param.output->dims());
+  auto tmp_data = tmp.mutable_data<float>();
+  TargetWrapperXPU::MemcpySync(tmp_data,
+                               param.output->raw_data(),
+                               sizeof(float) * param.output->numel(),
+                               IoDirection::DtoH);
+  LOG(INFO) << "--- scale out: " << tmp_data[0] << ", " << tmp_data[1] << ", "
+            << tmp_data[2] << ", ";
 }
 
 }  // namespace xpu

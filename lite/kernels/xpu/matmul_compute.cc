@@ -14,6 +14,7 @@
 
 #include "lite/kernels/xpu/matmul_compute.h"
 #include "lite/backends/xpu/math.h"
+#include "lite/backends/xpu/target_wrapper.h"
 #include "lite/backends/xpu/xpu_header_sitter.h"
 #include "lite/core/op_registry.h"
 
@@ -76,6 +77,16 @@ void MatMulCompute::Run() {
         mat_dim_a.height_ * mat_dim_b.width_ /* stride_c */);
   }
   CHECK_EQ(r, 0);
+
+  Tensor tmp;
+  tmp.Resize(param.Out->dims());
+  auto tmp_data = tmp.mutable_data<float>();
+  TargetWrapperXPU::MemcpySync(tmp_data,
+                               param.Out->raw_data(),
+                               sizeof(float) * param.Out->numel(),
+                               IoDirection::DtoH);
+  LOG(INFO) << "--- matmul out: " << tmp_data[0] << ", " << tmp_data[1] << ", "
+            << tmp_data[2] << ", ";
 }
 
 }  // namespace xpu

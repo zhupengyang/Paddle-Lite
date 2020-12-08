@@ -17,7 +17,9 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include "lite/backends/xpu/target_wrapper.h"
 #include "lite/backends/xpu/xpu_header_sitter.h"
+#include "lite/core/context.h"
 #include "lite/core/op_lite.h"
 #include "lite/core/op_registry.h"
 
@@ -128,9 +130,8 @@ void ElementwiseAddCompute::Run() {
                                 pre,
                                 n);
     CHECK_EQ(r, 0);
-    return;
-  }
-  if (pre != 1 || post != 1) {
+    // return;
+  } else if (pre != 1 || post != 1) {
     XPUScratchPadGuard y_broadcast_xpu_guard_ =
         TargetWrapperXPU::MallocScratchPad(len * sizeof(float),
                                            false /* use_l3 */);
@@ -151,15 +152,26 @@ void ElementwiseAddCompute::Run() {
         param.Out->mutable_data<float>(TARGET(kXPU)), /* z */
         len);
     CHECK_EQ(r, 0);
-    return;
+    // return;
+  } else {
+    int r = xdnn::elementwise_add(
+        ctx.GetRawContext(),                          /* context */
+        param.X->data<float>(),                       /* x */
+        param.Y->data<float>(),                       /* y */
+        param.Out->mutable_data<float>(TARGET(kXPU)), /* z */
+        len);
+    CHECK_EQ(r, 0);
   }
-  int r = xdnn::elementwise_add(
-      ctx.GetRawContext(),                          /* context */
-      param.X->data<float>(),                       /* x */
-      param.Y->data<float>(),                       /* y */
-      param.Out->mutable_data<float>(TARGET(kXPU)), /* z */
-      len);
-  CHECK_EQ(r, 0);
+
+  Tensor tmp;
+  tmp.Resize(param.Out->dims());
+  auto tmp_data = tmp.mutable_data<float>();
+  TargetWrapperXPU::MemcpySync(tmp_data,
+                               param.Out->raw_data(),
+                               sizeof(float) * param.Out->numel(),
+                               IoDirection::DtoH);
+  LOG(INFO) << "--- elementwise_add out: " << tmp_data[0] << ", " << tmp_data[1]
+            << ", " << tmp_data[2] << ", ";
 }
 
 void ElementwiseMulCompute::Run() {
@@ -180,6 +192,7 @@ void ElementwiseMulCompute::Run() {
   float* y_broadcast = nullptr;
 
   if (post == 1) {
+    LOG(INFO) << "--- 1";
     int r =
         xdnn::matrix_vector_mul(ctx.GetRawContext(),
                                 param.X->data<float>(),
@@ -188,9 +201,9 @@ void ElementwiseMulCompute::Run() {
                                 pre,
                                 n);
     CHECK_EQ(r, 0);
-    return;
-  }
-  if (pre != 1 || post != 1) {
+    // return;
+  } else if (pre != 1 || post != 1) {
+    LOG(INFO) << "--- 1";
     XPUScratchPadGuard y_broadcast_xpu_guard_ =
         TargetWrapperXPU::MallocScratchPad(len * sizeof(float),
                                            false /* use_l3 */);
@@ -211,15 +224,68 @@ void ElementwiseMulCompute::Run() {
         param.Out->mutable_data<float>(TARGET(kXPU)), /* z */
         len);
     CHECK_EQ(r, 0);
-    return;
+    // return;
+  } else {
+    LOG(INFO) << "--- 1";
+    int r = xdnn::elementwise_mul(
+        ctx.GetRawContext(),                          /* context */
+        param.X->data<float>(),                       /* x */
+        param.Y->data<float>(),                       /* y */
+        param.Out->mutable_data<float>(TARGET(kXPU)), /* z */
+        len);
+    CHECK_EQ(r, 0);
   }
-  int r = xdnn::elementwise_mul(
-      ctx.GetRawContext(),                          /* context */
-      param.X->data<float>(),                       /* x */
-      param.Y->data<float>(),                       /* y */
-      param.Out->mutable_data<float>(TARGET(kXPU)), /* z */
-      len);
-  CHECK_EQ(r, 0);
+
+  if (XPUContext::w == nullptr) {
+    XPUContext::w = const_cast<void*>(param.Y->raw_data());
+  }
+
+  {
+    Tensor tmp;
+    tmp.Resize(param.X->dims());
+    auto tmp_data = tmp.mutable_data<float>();
+    TargetWrapperXPU::MemcpySync(tmp_data,
+                                 param.X->raw_data(),
+                                 sizeof(float) * param.X->numel(),
+                                 IoDirection::DtoH);
+    float sum = 0.f;
+    for (int64_t i = 0; i < param.X->numel(); i++) {
+      sum += tmp_data[i];
+    }
+    LOG(INFO) << "--- elementwise_mul X: " << tmp_data[0] << ", " << tmp_data[1]
+              << ", " << tmp_data[2] << ", sum: " << sum;
+  }
+
+  {
+    Tensor tmp;
+    tmp.Resize(param.Y->dims());
+    auto tmp_data = tmp.mutable_data<float>();
+    TargetWrapperXPU::MemcpySync(tmp_data,
+                                 param.Y->raw_data(),
+                                 sizeof(float) * param.Y->numel(),
+                                 IoDirection::DtoH);
+    float sum = 0.f;
+    for (int64_t i = 0; i < param.Y->numel(); i++) {
+      sum += tmp_data[i];
+    }
+    LOG(INFO) << "--- after elementwise_mul Y: " << tmp_data[0] << ", "
+              << tmp_data[1] << ", " << tmp_data[2] << ", sum: " << sum
+              << ", y_raw_data_ptr: " << param.Y->raw_data()
+              << ", memory_size: " << param.Y->memory_size()
+              << ", offset: " << param.Y->offset();
+  }
+
+  {
+    Tensor tmp;
+    tmp.Resize(param.Out->dims());
+    auto tmp_data = tmp.mutable_data<float>();
+    TargetWrapperXPU::MemcpySync(tmp_data,
+                                 param.Out->raw_data(),
+                                 sizeof(float) * param.Out->numel(),
+                                 IoDirection::DtoH);
+    LOG(INFO) << "--- elementwise_mul out: " << tmp_data[0] << ", "
+              << tmp_data[1] << ", " << tmp_data[2] << ", ";
+  }
 }
 
 void ElementwiseSubCompute::Run() {
