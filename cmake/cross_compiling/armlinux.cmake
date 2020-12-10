@@ -24,8 +24,8 @@ check_input_var(ARMLINUX_ARCH_ABI DEFAULT ${ARM_TARGET_ARCH_ABI} LIST "armv8" "a
 
 if(ARMLINUX_ARCH_ABI STREQUAL "armv8")
     set(CMAKE_SYSTEM_PROCESSOR aarch64)
-    set(CMAKE_C_COMPILER "aarch64-linux-gnu-gcc")
-    set(CMAKE_CXX_COMPILER "aarch64-linux-gnu-g++")
+    # set(CMAKE_C_COMPILER "aarch64-linux-gnu-gcc")
+    # set(CMAKE_CXX_COMPILER "aarch64-linux-gnu-g++")
 endif()
 
 if(ARMLINUX_ARCH_ABI STREQUAL "armv7")
