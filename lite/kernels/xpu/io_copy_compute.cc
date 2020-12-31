@@ -71,6 +71,7 @@ class IoCopyXPUToHostCompute
   void Run() override {
     auto& param = Param<operators::IoCopyParam>();
     CHECK(param.x->target() == TARGET(kXPU));
+    LOG(INFO) << "precison: " << lite_api::PrecisionToStr(param.y->precision());
     auto mem_size = param.x->memory_size();
     VLOG(4) << "xpu to host, copy size " << mem_size;
     auto* data = param.y->mutable_data(TARGET(kHost), mem_size);
