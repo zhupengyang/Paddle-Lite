@@ -21,7 +21,9 @@ namespace lite {
 namespace kernels {
 namespace xpu {
 
-class ReshapeCompute : public KernelLite<TARGET(kXPU), PRECISION(kFloat)> {
+template <class T>
+class ReshapeCompute
+    : public KernelLite<TARGET(kXPU), PRECISION(kAny), DATALAYOUT(kAny)> {
  public:
   using param_t = operators::ReshapeParam;
 
