@@ -36,6 +36,19 @@ REGISTER_LITE_KERNEL(elementwise_add,
     .BindOutput("Out", {LiteType::GetTensorTy(TARGET(kX86))})
     .Finalize();
 
+#ifdef LITE_WITH_XPU
+REGISTER_LITE_KERNEL(elementwise_add,
+                     kXPU,
+                     kFloat,
+                     kNCHW,
+                     paddle::lite::kernels::x86::ElementwiseAddComputeXPU<int>,
+                     int32)
+    .BindInput("X", {LiteType::GetTensorTy(TARGET(kX86), PRECISION(kInt32))})
+    .BindInput("Y", {LiteType::GetTensorTy(TARGET(kX86), PRECISION(kInt32))})
+    .BindOutput("Out", {LiteType::GetTensorTy(TARGET(kX86), PRECISION(kInt32))})
+    .Finalize();
+#endif
+
 REGISTER_LITE_KERNEL(elementwise_mul,
                      kX86,
                      kFloat,
