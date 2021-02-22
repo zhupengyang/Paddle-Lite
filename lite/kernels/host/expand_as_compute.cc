@@ -30,7 +30,6 @@ void ExpandAsCompute<T, PType>::Run() {
   const T* src = x->template data<T>();
   T* dst = out->template mutable_data<T>();
 
-  // int dims = expand_times.size();
   for (int i = 0; i < target->dims().size(); ++i) {
     int times = target->dims()[i] / x->dims()[i];
     expand_times.push_back(times);
@@ -75,9 +74,9 @@ REGISTER_LITE_KERNEL(expand_as, kHost, kFloat, kAny, expand_as_float, def)
                {LiteType::GetTensorTy(TARGET(kHost),
                                       PRECISION(kFloat),
                                       DATALAYOUT(kAny))})
-    .BindInput("Target",
+    .BindInput("target_tensor",
                {LiteType::GetTensorTy(TARGET(kHost),
-                                      PRECISION(kFloat),
+                                      PRECISION(kAny),
                                       DATALAYOUT(kAny))})
     .BindOutput("Out",
                 {LiteType::GetTensorTy(TARGET(kHost),
@@ -92,9 +91,9 @@ REGISTER_LITE_KERNEL(expand_as, kHost, kFloat, kAny, expand_as_int64, int64)
                {LiteType::GetTensorTy(TARGET(kHost),
                                       PRECISION(kInt64),
                                       DATALAYOUT(kAny))})
-    .BindInput("Target",
+    .BindInput("target_tensor",
                {LiteType::GetTensorTy(TARGET(kHost),
-                                      PRECISION(kInt64),
+                                      PRECISION(kAny),
                                       DATALAYOUT(kAny))})
     .BindOutput("Out",
                 {LiteType::GetTensorTy(TARGET(kHost),
