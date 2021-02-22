@@ -75,6 +75,51 @@ class ConcatCompute : public KernelLite<TARGET(kX86), PRECISION(kFloat)> {
   virtual ~ConcatCompute() = default;
 };
 
+#ifdef LITE_WITH_XPU
+template <typename T>
+class ConcatComputeXPU : public KernelLite<TARGET(kXPU), PRECISION(kFloat)> {
+ public:
+  using param_t = operators::ConcatParam;
+
+  void Run() override {
+    auto& param = *param_.get_mutable<param_t>();
+    if (param.x.size() == 1) {
+      param.output->ShareDataWith(*param.x[0]);
+      return;
+    }
+
+    int64_t axis = static_cast<int64_t>(param.axis);
+    auto* axis_tensor = param.axis_tensor;
+    if (axis_tensor != nullptr) {
+      auto* axis_tensor_data = axis_tensor->template data<int>();
+      axis = static_cast<int64_t>(axis_tensor_data[0]);
+    }
+
+    const auto& x_dims = param.x[0]->dims();
+    auto* out = param.output;
+    T* output_data = param.output->template mutable_data<T>();
+
+    int offset_concat_axis = 0;
+    int num_concat = count(0, axis, x_dims);
+    int concat_input_size = count(axis + 1, x_dims.size(), x_dims);
+    const int top_concat_axis = out->dims()[axis];
+    for (size_t i = 0; i < param.x.size(); ++i) {
+      const T* bottom_data = param.x[i]->template data<T>();
+      const int64_t bottom_concat_axis = param.x[i]->dims()[axis];
+      for (int n = 0; n < num_concat; ++n) {
+        std::memcpy(
+            output_data +
+                (n * top_concat_axis + offset_concat_axis) * concat_input_size,
+            bottom_data + n * bottom_concat_axis * concat_input_size,
+            (bottom_concat_axis * concat_input_size) * sizeof(T));
+      }
+      offset_concat_axis += bottom_concat_axis;
+    }
+  }
+  virtual ~ConcatComputeXPU() = default;
+};
+#endif
+
 }  // namespace x86
 }  // namespace kernels
 }  // namespace lite

@@ -25,3 +25,17 @@ REGISTER_LITE_KERNEL(concat,
                {LiteType::GetTensorTy(TARGET(kX86), PRECISION(kInt32))})
     .BindOutput("Out", {LiteType::GetTensorTy(TARGET(kX86))})
     .Finalize();
+
+#ifdef LITE_WITH_XPU
+REGISTER_LITE_KERNEL(concat,
+                     kXPU,
+                     kFloat,
+                     kNCHW,
+                     paddle::lite::kernels::x86::ConcatComputeXPU<int64_t>,
+                     int64)
+    .BindInput("X", {LiteType::GetTensorTy(TARGET(kX86), PRECISION(kInt64))})
+    .BindInput("AxisTensor",
+               {LiteType::GetTensorTy(TARGET(kX86), PRECISION(kInt32))})
+    .BindOutput("Out", {LiteType::GetTensorTy(TARGET(kX86), PRECISION(kInt64))})
+    .Finalize();
+#endif
