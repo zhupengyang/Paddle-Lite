@@ -84,3 +84,20 @@ REGISTER_LITE_KERNEL(expand_as, kHost, kFloat, kAny, expand_as_float, def)
                                        PRECISION(kFloat),
                                        DATALAYOUT(kAny))})
     .Finalize();
+
+using expand_as_int64 =
+    paddle::lite::kernels::host::ExpandAsCompute<int64_t, PRECISION(kFloat)>;
+REGISTER_LITE_KERNEL(expand_as, kHost, kFloat, kAny, expand_as_int64, int64)
+    .BindInput("X",
+               {LiteType::GetTensorTy(TARGET(kHost),
+                                      PRECISION(kInt64),
+                                      DATALAYOUT(kAny))})
+    .BindInput("Target",
+               {LiteType::GetTensorTy(TARGET(kHost),
+                                      PRECISION(kInt64),
+                                      DATALAYOUT(kAny))})
+    .BindOutput("Out",
+                {LiteType::GetTensorTy(TARGET(kHost),
+                                       PRECISION(kInt64),
+                                       DATALAYOUT(kAny))})
+    .Finalize();
