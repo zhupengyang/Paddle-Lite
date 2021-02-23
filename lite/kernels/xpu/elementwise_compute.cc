@@ -49,8 +49,8 @@ void ElementwiseAddCompute<T>::Run() {
 
   int ret =
       xdnn::broadcast_add<T>(ctx.GetRawContext(),
-                             param.X->tempalte data<T>(),
-                             param.Y->tempalte data<T>(),
+                             param.X->template data<T>(),
+                             param.Y->template data<T>(),
                              param.Out->template mutable_data<T>(TARGET(kXPU)),
                              x_shape,
                              y_shape);
