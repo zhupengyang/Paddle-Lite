@@ -67,22 +67,6 @@ void ExpandAsCompute<T, PType>::Run() {
 }  // namespace kernels
 }  // namespace lite
 }  // namespace paddle
-using expand_as_float =
-    paddle::lite::kernels::host::ExpandAsCompute<float, PRECISION(kFloat)>;
-REGISTER_LITE_KERNEL(expand_as, kHost, kFloat, kAny, expand_as_float, def)
-    .BindInput("X",
-               {LiteType::GetTensorTy(TARGET(kHost),
-                                      PRECISION(kFloat),
-                                      DATALAYOUT(kAny))})
-    .BindInput("target_tensor",
-               {LiteType::GetTensorTy(TARGET(kHost),
-                                      PRECISION(kAny),
-                                      DATALAYOUT(kAny))})
-    .BindOutput("Out",
-                {LiteType::GetTensorTy(TARGET(kHost),
-                                       PRECISION(kFloat),
-                                       DATALAYOUT(kAny))})
-    .Finalize();
 
 using expand_as_int64 =
     paddle::lite::kernels::host::ExpandAsCompute<int64_t, PRECISION(kFloat)>;
