@@ -13,20 +13,28 @@
 // limitations under the License.
 
 #pragma once
-
-#include <memory>
 #include <string>
-#include "lite/core/mir/pass.h"
+#include <vector>
+#include "lite/core/op_lite.h"
 
 namespace paddle {
 namespace lite {
-namespace mir {
+namespace operators {
 
-class ReshapeFusePass : public ProgramPass {
+class WhereOp : public OpLite {
  public:
-  void Apply(const std::unique_ptr<SSAGraph>& graph) override;
+  WhereOp() {}
+  explicit WhereOp(const std::string &op_type) : OpLite(op_type) {}
+  bool CheckShape() const override;
+  bool InferShapeImpl() const override;
+  bool AttachImpl(const cpp::OpDesc &opdesc, lite::Scope *scope) override;
+  void AttachKernel(KernelBase *kernel) override { kernel->SetParam(param_); }
+  std::string DebugString() const override { return "where_op"; }
+
+ private:
+  mutable WhereParam param_;
 };
 
-}  // namespace mir
+}  // namespace operators
 }  // namespace lite
 }  // namespace paddle

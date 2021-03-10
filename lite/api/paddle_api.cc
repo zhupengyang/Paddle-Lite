@@ -124,6 +124,10 @@ template int8_t *Tensor::mutable_data(TargetType type) const;
 template uint16_t *Tensor::mutable_data(TargetType type) const;
 template uint8_t *Tensor::mutable_data(TargetType type) const;
 template bool *Tensor::mutable_data(TargetType type) const;
+#ifdef ENABLE_ARM_FP16
+template const __fp16 *Tensor::data<__fp16>() const;
+template _fp16 *Tensor::mutable_data(TargetType type) const;
+#endif
 
 template <typename T, TargetType type>
 void Tensor::CopyFromCpu(const T *src_data) {
@@ -287,15 +291,20 @@ void ConfigBase::set_opencl_binary_path_name(const std::string &path,
 #endif
 }
 
-void ConfigBase::set_opencl_tune(CLTuneMode tune_mode, size_t lws_repeats) {
+void ConfigBase::set_opencl_tune(CLTuneMode tune_mode,
+                                 const std::string &path,
+                                 const std::string &name,
+                                 size_t lws_repeats) {
 #ifdef LITE_WITH_OPENCL
   if (paddle::lite_api::IsOpenCLBackendValid()) {
     opencl_tune_mode_ = tune_mode;
-    paddle::lite::CLRuntime::Global()->set_auto_tune(opencl_tune_mode_,
-                                                     lws_repeats);
+    paddle::lite::CLRuntime::Global()->set_auto_tune(
+        opencl_tune_mode_, path, name, lws_repeats);
 #ifdef LITE_WITH_LOG
     LOG(INFO) << "set opencl_tune_mode: "
-              << CLTuneModeToStr(lite::CLRuntime::Global()->auto_tune());
+              << CLTuneModeToStr(lite::CLRuntime::Global()->auto_tune())
+              << ", lws_repeats:" << lws_repeats;
+    LOG(INFO) << "tuned file path & name:" << path << "/" << name;
 #endif
   }
 #endif

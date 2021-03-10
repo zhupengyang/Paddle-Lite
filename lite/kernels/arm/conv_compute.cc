@@ -20,6 +20,9 @@
 #include "lite/kernels/arm/conv_direct.h"
 #include "lite/kernels/arm/conv_gemmlike.h"
 #include "lite/kernels/arm/conv_winograd.h"
+#ifdef ENABLE_ARM_FP16
+#include "lite/backends/arm/math/fp16/funcs_fp16.h"
+#endif
 
 namespace paddle {
 namespace lite {
@@ -136,6 +139,27 @@ void ConvCompute<PRECISION(kInt8), PRECISION(kInt8)>::PrepareForRun() {
 template <>
 void ConvCompute<PRECISION(kFP16), PRECISION(kFP16)>::PrepareForRun() {
   PARAM_INIT
+  // fp32 -> fp16
+  if (param.filter->precision() == PrecisionType::kFloat) {
+    Tensor tmp_tensor;
+    tmp_tensor.CopyDataFrom(*param.filter);
+    param.filter->clear();
+    param.filter->set_precision(PRECISION(kFP16));
+    const float* src_data = tmp_tensor.data<float>();
+    float16_t* weight_data = param.filter->mutable_data<float16_t>();
+    lite::arm::math::fp16::fp32_to_fp16(
+        src_data, weight_data, param.filter->numel());
+  }
+  if (param.bias && param.bias->precision() == PrecisionType::kFloat) {
+    Tensor tmp_tensor;
+    tmp_tensor.CopyDataFrom(*param.bias);
+    param.bias->clear();
+    param.bias->set_precision(PRECISION(kFP16));
+    const float* src_data = tmp_tensor.data<float>();
+    float16_t* bias_data = param.bias->mutable_data<float16_t>();
+    lite::arm::math::fp16::fp32_to_fp16(
+        src_data, bias_data, param.bias->numel());
+  }
   /// select conv impl
   if (param.groups == ic && ic == oc && kps_equal && pads_equal &&
       no_dilation && flag_dw_3x3) {
@@ -175,6 +199,7 @@ typedef paddle::lite::kernels::arm::ConvCompute<PRECISION(kFP16),
 REGISTER_LITE_KERNEL(conv2d, kARM, kFP16, kNCHW, ConvFp16, def)
     .BindInput("Input", {LiteType::GetTensorTy(TARGET(kARM))})
     .BindInput("Bias", {LiteType::GetTensorTy(TARGET(kARM))})
+    .BindInput("Prelu_alpha", {LiteType::GetTensorTy(TARGET(kARM))})
     .BindInput("Filter", {LiteType::GetTensorTy(TARGET(kARM))})
     .BindOutput("Output", {LiteType::GetTensorTy(TARGET(kARM))})
     .BindPaddleOpVersion("conv2d", 1)
@@ -192,6 +217,7 @@ REGISTER_LITE_KERNEL(depthwise_conv2d, kARM, kFP16, kNCHW, ConvFp16, def)
 REGISTER_LITE_KERNEL(conv2d, kARM, kFloat, kNCHW, ConvFp32, def)
     .BindInput("Input", {LiteType::GetTensorTy(TARGET(kARM))})
     .BindInput("Bias", {LiteType::GetTensorTy(TARGET(kARM))})
+    .BindInput("Prelu_alpha", {LiteType::GetTensorTy(TARGET(kARM))})
     .BindInput("Filter", {LiteType::GetTensorTy(TARGET(kARM))})
     .BindOutput("Output", {LiteType::GetTensorTy(TARGET(kARM))})
     .BindPaddleOpVersion("conv2d", 1)
@@ -200,6 +226,7 @@ REGISTER_LITE_KERNEL(conv2d, kARM, kFloat, kNCHW, ConvFp32, def)
 REGISTER_LITE_KERNEL(depthwise_conv2d, kARM, kFloat, kNCHW, ConvFp32, def)
     .BindInput("Input", {LiteType::GetTensorTy(TARGET(kARM))})
     .BindInput("Bias", {LiteType::GetTensorTy(TARGET(kARM))})
+    .BindInput("Prelu_alpha", {LiteType::GetTensorTy(TARGET(kARM))})
     .BindInput("Filter", {LiteType::GetTensorTy(TARGET(kARM))})
     .BindOutput("Output", {LiteType::GetTensorTy(TARGET(kARM))})
     .BindPaddleOpVersion("depthwise_conv2d", 1)
@@ -208,6 +235,8 @@ REGISTER_LITE_KERNEL(depthwise_conv2d, kARM, kFloat, kNCHW, ConvFp32, def)
 REGISTER_LITE_KERNEL(conv2d, kARM, kInt8, kNCHW, ConvInt8_Int8, int8_out)
     .BindInput("Input", {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kInt8))})
     .BindInput("Bias", {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kFloat))})
+    .BindInput("Prelu_alpha",
+               {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kFloat))})
     .BindInput("Filter",
                {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kInt8))})
     .BindOutput("Output",
@@ -218,6 +247,8 @@ REGISTER_LITE_KERNEL(conv2d, kARM, kInt8, kNCHW, ConvInt8_Int8, int8_out)
 REGISTER_LITE_KERNEL(conv2d, kARM, kInt8, kNCHW, ConvInt8_Fp32, fp32_out)
     .BindInput("Input", {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kInt8))})
     .BindInput("Bias", {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kFloat))})
+    .BindInput("Prelu_alpha",
+               {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kFloat))})
     .BindInput("Filter",
                {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kInt8))})
     .BindOutput("Output",
@@ -229,6 +260,8 @@ REGISTER_LITE_KERNEL(
     depthwise_conv2d, kARM, kInt8, kNCHW, ConvInt8_Int8, int8_out)
     .BindInput("Input", {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kInt8))})
     .BindInput("Bias", {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kFloat))})
+    .BindInput("Prelu_alpha",
+               {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kFloat))})
     .BindInput("Filter",
                {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kInt8))})
     .BindOutput("Output",
@@ -240,6 +273,8 @@ REGISTER_LITE_KERNEL(
     depthwise_conv2d, kARM, kInt8, kNCHW, ConvInt8_Fp32, fp32_out)
     .BindInput("Input", {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kInt8))})
     .BindInput("Bias", {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kFloat))})
+    .BindInput("Prelu_alpha",
+               {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kFloat))})
     .BindInput("Filter",
                {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kInt8))})
     .BindOutput("Output",

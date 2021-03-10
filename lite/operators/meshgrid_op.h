@@ -12,32 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "lite/core/mir/fusion/reshape_fuse_pass.h"
-#include <memory>
+#pragma once
+#include <string>
 #include <vector>
-#include "lite/core/mir/fusion/reshape_fuser.h"
-#include "lite/core/mir/pass_registry.h"
+#include "lite/core/op_lite.h"
 
 namespace paddle {
 namespace lite {
-namespace mir {
+namespace operators {
 
-void ReshapeFusePass::Apply(const std::unique_ptr<SSAGraph>& graph) {
-  std::vector<std::string> reshape_type_cases{"reshape", "reshape2"};
-  for (auto type_ : reshape_type_cases) {
-    fusion::ReshapeFuser reshape_fuser(type_);
-    reshape_fuser(graph.get());
-  }
+class MeshgridOpLite : public OpLite {
+ public:
+  MeshgridOpLite() {}
+  explicit MeshgridOpLite(const std::string &op_type) : OpLite(op_type) {}
 
-  for (auto type_ : reshape_type_cases) {
-    fusion::Reshape2OutFuser reshape2Out_fuser(type_);
-    reshape2Out_fuser(graph.get());
-  }
-}
+  bool CheckShape() const override;
 
-}  // namespace mir
+  bool InferShapeImpl() const override;
+
+  bool AttachImpl(const cpp::OpDesc &opdesc, lite::Scope *scope) override;
+
+  void AttachKernel(KernelBase *kernel) override { kernel->SetParam(param_); }
+  std::string DebugString() const override { return "meshgrid"; }
+
+ private:
+  mutable MeshgridParam param_;
+};
+
+}  // namespace operators
 }  // namespace lite
 }  // namespace paddle
-
-REGISTER_MIR_PASS(lite_reshape_fuse_pass, paddle::lite::mir::ReshapeFusePass)
-    .BindTargets({TARGET(kAny)});

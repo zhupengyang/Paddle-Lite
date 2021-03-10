@@ -13,27 +13,23 @@
 // limitations under the License.
 
 #pragma once
-#include <algorithm>
-#include "lite/core/kernel.h"
+
+#include <cmath>
+#include "lite/core/context.h"
 
 namespace paddle {
 namespace lite {
-namespace kernels {
-namespace arm {
+namespace host {
+namespace math {
 
-class BeamSearchDecodeCompute
-    : public KernelLite<TARGET(kARM), PRECISION(kFloat)> {
- public:
-  using param_t = operators::BeamSearchDecodeParam;
-
-  BeamSearchDecodeCompute() = default;
-
-  void Run() override;
-
-  virtual ~BeamSearchDecodeCompute() = default;
-};
-
-}  // namespace arm
-}  // namespace kernels
+void p_norm(const float* input,
+            const int pre_n,
+            const int n,
+            const int post_n,
+            const float epsilon,
+            float* out,
+            const int porder);
+}  // namespace math
+}  // namespace host
 }  // namespace lite
 }  // namespace paddle
