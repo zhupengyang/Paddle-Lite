@@ -25,7 +25,7 @@ add_kernel(batch_norm_compute_arm ARM basic SRCS batch_norm_compute.cc DEPS ${li
 add_kernel(elementwise_compute_arm ARM basic SRCS elementwise_compute.cc DEPS ${lite_kernel_deps} math_arm)
 
 add_kernel(pool_compute_arm ARM basic SRCS pool_compute.cc DEPS ${lite_kernel_deps} math_arm)
-add_kernel(split_compute_arm ARM basic SRCS split_compute.cc DEPS ${lite_kernel_deps} math_arm)
+add_kernel(split_compute_arm ARM basic SRCS split_compute.cc DEPS ${lite_kernel_deps} split_compute_host)
 add_kernel(concat_compute_arm ARM basic SRCS concat_compute.cc DEPS ${lite_kernel_deps} math_arm)
 add_kernel(pad2d_compute_arm ARM basic SRCS pad2d_compute.cc DEPS ${lite_kernel_deps} math_arm)
 add_kernel(prior_box_compute_arm ARM basic SRCS prior_box_compute.cc DEPS ${lite_kernel_deps} math_arm)

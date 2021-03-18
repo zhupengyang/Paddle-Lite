@@ -13,17 +13,13 @@
 // limitations under the License.
 
 #pragma once
-
 #include <vector>
 #include "lite/core/op_lite.h"
 
 namespace paddle {
 namespace lite {
-namespace arm {
+namespace host {
 namespace math {
-
-template <typename T>
-void split_cpy(const T* din, T* dout, int num);
 
 template <typename T>
 void split(const T* din,
@@ -32,6 +28,6 @@ void split(const T* din,
            const std::vector<int>& in_strides);
 
 }  // namespace math
-}  // namespace arm
+}  // namespace host
 }  // namespace lite
 }  // namespace paddle
