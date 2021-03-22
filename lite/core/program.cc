@@ -488,6 +488,7 @@ void Instruction::Run() {
     return;
   }
 
+  LOG(INFO) << "op: " << op_->DebugString();
   op_->InferShape();
   kernel_->Launch();
   has_run_ = true;

@@ -107,6 +107,7 @@ ExternalProject_Add(
     ${EXTERNAL_PROJECT_LOG_ARGS}
     PREFIX                 ${MKLML_SOURCE_DIR}
     URL                    ${MKLML_URL}
+    URL_HASH              SHA256=15d909ea87bfc40048fe283dfb18af6356f179f403f48847d8c379ee5f0fd7af
     DOWNLOAD_DIR          ${MKLML_DOWNLOAD_DIR}
     DOWNLOAD_NO_PROGRESS  1
     CONFIGURE_COMMAND     ""
