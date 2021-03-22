@@ -99,6 +99,8 @@ class LITE_API Predictor {
              const std::vector<Place>& valid_places,
              const std::vector<std::string>& passes = {});
 
+  void UpdataProgramDesc() { program_->SaveToProgram(program_desc_); }
+
   //////////////////////////////////////////////////////////
   // Function: Clone
   // Usage: Create a Predictor from an existed one,
