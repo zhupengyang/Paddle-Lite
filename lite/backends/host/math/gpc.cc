@@ -1412,13 +1412,27 @@ void gpc_polygon_clip(gpc_op op,
 }
 
 void gpc_free_polygon(gpc_polygon *p) {
-  int c = 0;
-
-  for (c = 0; c < p->num_contours; c++) {
-    gpc_free<gpc_vertex>(p->contour[c].vertex);
+  LOG(INFO) << "--- gpc_free_polygon 0";
+  for (int c = 0; c < p->num_contours; c++) {
+    /*
+        gpc_free<gpc_vertex>(p->contour[c].vertex);
+        p->contour[c].vertex=NULL;
+    */
+    LOG(INFO) << "--- gpc_free_polygon 1";
+    if (p->contour[c].vertex) {
+      LOG(INFO) << "--- gpc_free_polygon 1.1";
+      free(p->contour[c].vertex);
+      LOG(INFO) << "--- gpc_free_polygon 1.2";
+    }
+    LOG(INFO) << "--- gpc_free_polygon 2";
+    p->contour[c].num_vertices = 0;
+    LOG(INFO) << "--- gpc_free_polygon 3";
   }
+  LOG(INFO) << "--- gpc_free_polygon 4";
   gpc_free<int>(p->hole);
+  LOG(INFO) << "--- gpc_free_polygon 5";
   gpc_free<gpc_vertex_list>(p->contour);
+  LOG(INFO) << "--- gpc_free_polygon 6";
   p->num_contours = 0;
 }
 

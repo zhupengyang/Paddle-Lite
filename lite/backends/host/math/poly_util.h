@@ -141,8 +141,11 @@ T PolyOverlapArea(const T* box1,
     inter_area += GetContourArea<T>(resvec);
   }
 
+  LOG(INFO) << "--- PolyOverlapArea 0";
   gpc_free_polygon(&poly1);
+  LOG(INFO) << "--- PolyOverlapArea 1";
   gpc_free_polygon(&poly2);
+  LOG(INFO) << "--- PolyOverlapArea 2";
   gpc_free_polygon(&respoly);
   return inter_area;
 }
