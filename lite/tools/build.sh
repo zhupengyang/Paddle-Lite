@@ -454,10 +454,10 @@ function make_x86 {
     BUILD_EXTRA=ON
   fi
 
-  if [ -d $build_directory ]
-  then
-    rm -rf $build_directory
-  fi
+#   if [ -d $build_directory ]
+#   then
+#     rm -rf $build_directory
+#   fi
   mkdir -p $build_directory
   cd $build_directory
 
