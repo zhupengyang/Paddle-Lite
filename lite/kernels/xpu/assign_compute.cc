@@ -25,7 +25,7 @@ void AssignCompute::Run() {
   if (param.X == param.Out) {
     return;
   }
-  param.Out->CopyDataFrom(*param.X);
+  param.Out->ShareDataWith(*param.X);
 }
 
 }  // namespace xpu
