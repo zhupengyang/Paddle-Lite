@@ -41,31 +41,33 @@ class GenerateProgramPass : public ProgramPass {
     LOG(INFO) << "insts.size " << insts_.size();
 
     // sub pragram
-    std::string sub_block_ops{"while", "conditional_block"};
-    for (auto& inst : insts_[0]) {
-      std::string op_name = inst.op->Type();
-      if (std::find(sub_block_ops.begin(), sub_block_ops.end(), op_name) ==
-          sub_block_ops.end()) {
-        continue;
-      }
-      CHECK(inst.op->op_info()->HasAttr("sub_block"));
-      int block_idx = inst.op()->op_info()->GetAttr<int>("sub_block");
+    std::vector<std::string> sub_block_ops{"while", "conditional_block"};
+    for (int i = insts_.size() - 1; i >= 0; i--) {
+      for (auto& inst : insts_[i]) {
+        std::string op_name = inst.op()->Type();
+        if (std::find(sub_block_ops.begin(), sub_block_ops.end(), op_name) ==
+            sub_block_ops.end()) {
+          continue;
+        }
+        CHECK(inst.op()->op_info()->HasAttr("sub_block"));
+        int block_idx = inst.op()->op_info()->GetAttr<int>("sub_block");
+        LOG(INFO) << "--- block_idx: " << block_idx;
+        std::vector<std::vector<Instruction>> sub_insts;
+        sub_insts.emplace_back(std::move(insts_[block_idx]));
+        LOG(INFO) << "--- insts_.size(): " << insts_.size();
+        std::unique_ptr<RuntimeProgram> sub_program(
+            new RuntimeProgram(std::move(sub_insts)));
 
-      if (op_name == "while") {
-        std::vector<std::vector<Instruction>> sub_insts{insts_[block_idx]};
-        std::unique_ptr<RuntimeProgram> sub_program(
-            new RuntimeProgram(std::move(sub_insts)));
-        auto* kernel =
-            static_cast<kernels::host::WhileCompute*>(inst.mutable_kernel());
-        kernel->SetRuntimeProgram(&sub_program);
-      }
-      if (op_name == "conditional_block") {
-        std::vector<std::vector<Instruction>> sub_insts{insts_[block_idx]};
-        std::unique_ptr<RuntimeProgram> sub_program(
-            new RuntimeProgram(std::move(sub_insts)));
-        auto* kernel = static_cast<kernels::host::ConditionalBlockCompute*>(
-            inst.mutable_kernel());
-        kernel->SetRuntimeProgram(&sub_program);
+        if (op_name == "while") {
+          auto* kernel =
+              static_cast<kernels::host::WhileCompute*>(inst.mutable_kernel());
+          kernel->SetRuntimeProgram(&sub_program);
+        }
+        if (op_name == "conditional_block") {
+          auto* kernel = static_cast<kernels::host::ConditionalBlockCompute*>(
+              inst.mutable_kernel());
+          kernel->SetRuntimeProgram(&sub_program);
+        }
       }
     }
 
