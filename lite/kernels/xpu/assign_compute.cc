@@ -14,25 +14,49 @@
 
 #include "lite/kernels/xpu/assign_compute.h"
 #include <algorithm>
+#include "lite/backends/xpu/xpu_header_sitter.h"
 
 namespace paddle {
 namespace lite {
 namespace kernels {
 namespace xpu {
 
-template <class T>
-void AssignCompute<T>::Run() {
+void AssignCompute::Run() {
   auto& param = Param<param_t>();
   CHECK(param.X) << "only support input is tensor";
   if (param.X == param.Out) {
     return;
   }
 
-  auto& ctx = this->ctx_->template As<XPUContext>();
-  int r = xdnn::copy<T>(ctx.GetRawContext(),
-                        param.X->template data<T>(),
-                        param.Out->template mutable_data<T>(TARGET(kXPU)),
-                        param.X->numel());
+  auto& ctx = this->ctx_->As<XPUContext>();
+  int r;
+  switch (param.X->precision()) {
+    case PRECISION(kFloat): {
+      r = xdnn::copy<float>(ctx.GetRawContext(),
+                            param.X->data<float>(),
+                            param.Out->mutable_data<float>(TARGET(kXPU)),
+                            param.X->numel());
+      break;
+    }
+    case PRECISION(kInt32): {
+      r = xdnn::copy<int>(ctx.GetRawContext(),
+                          param.X->data<int>(),
+                          param.Out->mutable_data<int>(TARGET(kXPU)),
+                          param.X->numel());
+      break;
+    }
+    case PRECISION(kInt64): {
+      r = xdnn::copy<int64_t>(ctx.GetRawContext(),
+                              param.X->data<int64_t>(),
+                              param.Out->mutable_data<int64_t>(TARGET(kXPU)),
+                              param.X->numel());
+      break;
+    }
+    default:
+      LOG(FATAL) << "unsupported date type: "
+                 << lite_api::PrecisionToStr(param.X->precision());
+  }
+
   CHECK_EQ(r, 0);
 }
 
@@ -41,50 +65,14 @@ void AssignCompute<T>::Run() {
 }  // namespace lite
 }  // namespace paddle
 
-REGISTER_LITE_KERNEL(assign,
-                     kXPU,
-                     kFloat,
-                     kNCHW,
-                     paddle::lite::kernels::xpu::AssignCompute<float>,
-                     def)
+REGISTER_LITE_KERNEL(
+    assign, kXPU, kFloat, kNCHW, paddle::lite::kernels::xpu::AssignCompute, def)
     .BindInput("X",
                {LiteType::GetTensorTy(TARGET(kXPU),
-                                      PRECISION(kFloat),
+                                      PRECISION(kAny),
                                       DATALAYOUT(kAny))})
     .BindOutput("Out",
                 {LiteType::GetTensorTy(TARGET(kXPU),
-                                       PRECISION(kFloat),
-                                       DATALAYOUT(kAny))})
-    .Finalize();
-
-REGISTER_LITE_KERNEL(assign,
-                     kXPU,
-                     kFloat,
-                     kNCHW,
-                     paddle::lite::kernels::xpu::AssignCompute<int>,
-                     int32)
-    .BindInput("X",
-               {LiteType::GetTensorTy(TARGET(kXPU),
-                                      PRECISION(kInt32),
-                                      DATALAYOUT(kAny))})
-    .BindOutput("Out",
-                {LiteType::GetTensorTy(TARGET(kXPU),
-                                       PRECISION(kInt32),
-                                       DATALAYOUT(kAny))})
-    .Finalize();
-
-REGISTER_LITE_KERNEL(assign,
-                     kXPU,
-                     kFloat,
-                     kNCHW,
-                     paddle::lite::kernels::xpu::AssignCompute<int64_t>,
-                     int64)
-    .BindInput("X",
-               {LiteType::GetTensorTy(TARGET(kXPU),
-                                      PRECISION(kInt64),
-                                      DATALAYOUT(kAny))})
-    .BindOutput("Out",
-                {LiteType::GetTensorTy(TARGET(kXPU),
-                                       PRECISION(kInt64),
+                                       PRECISION(kAny),
                                        DATALAYOUT(kAny))})
     .Finalize();
