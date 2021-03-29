@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include "lite/kernels/xpu/read_from_array_compute.h"
+#include <algorithm>
+#include "lite/backends/xpu/target_wrapper.h"
 
 namespace paddle {
 namespace lite {
@@ -24,9 +26,11 @@ void ReadFromArrayCompute::Run() {
   auto& ctx = this->ctx_->As<XPUContext>();
 
   CHECK_EQ(param.I->numel(), 1) << "I should have only one element";
-  int id = param.I->data<int64_t>()[0];
+  int id;
+  TargetWrapperXPU::MemcpySync(
+      &id, param.I->raw_data(), sizeof(int64_t), IoDirection::DtoH);
   int in_num = param.X->size();
-  CHECK_LE(id, in_num) << "id is not valid";
+  CHECK_LT(id, in_num) << "id is not valid";
   const auto& elem = (*param.X)[id];
   param.Out->Resize(elem.dims());
   param.Out->set_lod(elem.lod());
@@ -55,7 +59,7 @@ REGISTER_LITE_KERNEL(read_from_array,
                                           PRECISION(kAny),
                                           DATALAYOUT(kAny))})
     .BindInput("I",
-               {LiteType::GetTensorTy(TARGET(kHost),
+               {LiteType::GetTensorTy(TARGET(kXPU),
                                       PRECISION(kInt64),
                                       DATALAYOUT(kAny))})
     .BindOutput("Out",
