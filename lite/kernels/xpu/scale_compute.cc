@@ -25,6 +25,11 @@ void ScaleCompute::Run() {
   auto& param = this->Param<param_t>();
   auto& ctx = this->ctx_->As<XPUContext>();
 
+  if (param.x->target() != TARGET(kXPU)) {
+    param.output->Resize({0});
+    return;
+  }
+
   auto& x_dims = param.x->dims();
   if (std::fabs(param.scale - 1.0f) < 1e-7 && std::fabs(param.bias) < 1e-7) {
     auto x = param.x;
