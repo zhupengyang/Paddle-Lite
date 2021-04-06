@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 #include "lite/core/mir/control_flow_op_shared_inputs_and_outputs_place_sync_pass.h"
+#include "lite/core/mir/control_flow_op_update_topological_order.h"
 #include "lite/core/mir/elimination/control_flow_op_unused_inputs_and_outputs_eliminate_pass.h"
 #include "lite/core/mir/fp16_attribute_pass.h"
 #include "lite/core/mir/generate_program_pass.h"
@@ -82,6 +83,7 @@ class Optimizer {
     InitTargetTypeTransformPass();
     InitControlFlowOpUnusedInputsAndOutputsEliminatePass();
     InitControlFlowOpSharedInputsAndOutputsPlaceSyncPass();
+    InitControlFlowOpUpdateTopologicalOrderPass();
 
     std::vector<std::string> passes_local{
         {"lite_quant_dequant_fuse_pass",             //
@@ -197,6 +199,7 @@ class Optimizer {
          "runtime_context_assign_pass",
          "argument_type_display_pass",
          "lite_inplace_fuse_pass",
+         "control_flow_op_update_topological_order",
 #if !(defined(LITE_WITH_FPGA) || defined(LITE_WITH_PRECISION_PROFILE))
          "memory_optimize_pass"
 #endif
@@ -288,6 +291,15 @@ class Optimizer {
         mir::PassManager::Global()
             .LookUp<mir::ControlFlowOpSharedInputsAndOutputsPlaceSyncPass>(
                 "control_flow_op_shared_inputs_and_outputs_place_sync_pass");
+    CHECK(pass);
+    CHECK(!graphs_.empty());
+    pass->SetAllGraphs(&graphs_);
+  }
+
+  void InitControlFlowOpUpdateTopologicalOrderPass() {
+    auto* pass = mir::PassManager::Global()
+                     .LookUp<mir::ControlFlowOpUpdateTopologicalOrderPass>(
+                         "control_flow_op_update_topological_order");
     CHECK(pass);
     CHECK(!graphs_.empty());
     pass->SetAllGraphs(&graphs_);
