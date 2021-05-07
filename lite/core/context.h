@@ -263,13 +263,25 @@ template <>
 class Context<TargetType::kXPU> {
  public:
   // NOTE: InitOnce should only be used by ContextScheduler
-  void InitOnce() {}
+  void InitOnce() {
+    // get device_id from config, and set to device_id_
+  }
 
-  void CopySharedTo(XPUContext* ctx) {}
+  void CopySharedTo(XPUContext* ctx) {
+    target_wrapper_ = ctx->GetTargetWrapper();
+  }
 
-  // TODO(miaotianxiang): remove this
-  static xdnn::Context* GetRawContext() {
-    return TargetWrapperXPU::GetRawContext();
+  xdnn::Context* GetRawContext() { return target_wrapper_->GetRawContext(); }
+
+  static std::shared_ptr<TargetWrapperXPU> GetTargetWrapper(int device_id = 0) {
+    CHECK_GE(device_id, 0);
+    if (static_cast<int>(target_wrappers_.size()) < device_id + 1) {
+      target_wrappers_.resize(device_id + 1);
+    }
+    if (target_wrappers_[device_id] == nullptr) {
+      target_wrappers_[device_id] = std::make_shared<TargetWrapperXPU>();
+    }
+    return target_wrappers_[device_id];
   }
 
   std::string name() const { return "XPUContext"; }

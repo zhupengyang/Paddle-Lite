@@ -14,11 +14,12 @@
 
 #pragma once
 
-#include <memory>                                 // std::unique_ptr
-#include <mutex>                                  // NOLINT
-#include "lite/backends/xpu/xpu_header_sitter.h"  // xpu_free
-#include "lite/core/target_wrapper.h"             // TargetWrapper
-#include "lite/utils/cp_logging.h"                // CHECK_EQ
+#include <memory>
+#include <mutex>  // NOLINT
+#include <vector>
+#include "lite/backends/xpu/xpu_header_sitter.h"
+#include "lite/core/target_wrapper.h"
+#include "lite/utils/cp_logging.h"
 #include "lite/utils/macros.h"
 
 #define XPU_CALL(func)                                        \
@@ -53,23 +54,44 @@ struct XPUScratchPadDeleter {
 
 using XPUScratchPadGuard = std::unique_ptr<XPUScratchPad, XPUScratchPadDeleter>;
 
+class XpuDeviceInfo {
+ public:
+  static XpuDeviceInfo& Global() {
+    static auto* x = new XpuDeviceInfo;
+    return *x;
+  }
+
+  static std::shared_ptr<TargetWrapperXPU> GetWrapper(int device_id = 0) {
+    static std::mutex mutex_conf;
+    std::unique_lock<std::mutex> lck(mutex_conf);
+    CHECK_GE(device_id, 0);
+    if (static_cast<int>(xpu_wrappers_.size()) < device_id + 1) {
+      xpu_wrappers_.resize(device_id + 1);
+    }
+    if (xpu_wrappers_[device_id] == nullptr) {
+      xpu_wrappers_[device_id] = std::make_shared<TargetWrapperXPU>();
+    }
+    return xpu_wrappers_[device_id];
+  }
+
+ private:
+  static std::vector<std::shared_ptr<TargetWrapperXPU>> xpu_wrappers_;
+};
+
 template <>
 class TargetWrapper<TARGET(kXPU)> {
  public:
-  static size_t num_devices() { return 1; }
-  static size_t maximum_stream() { return 0; }
+  size_t num_devices() { return 1; }
+  size_t maximum_stream() { return 0; }
 
-  static void* Malloc(size_t size);
-  static void Free(void* ptr);
+  void* Malloc(size_t size);
+  void Free(void* ptr);
 
-  static void MemcpySync(void* dst,
-                         const void* src,
-                         size_t size,
-                         IoDirection dir);
+  void MemcpySync(void* dst, const void* src, size_t size, IoDirection dir);
 
-  static XPUScratchPadGuard MallocScratchPad(size_t size);
+  XPUScratchPadGuard MallocScratchPad(size_t size);
 
-  static xdnn::Context* GetRawContext() {
+  xdnn::Context* GetRawContext() {
     if (tls_raw_ctx_ == nullptr) {
       tls_raw_ctx_ = xdnn::create_context();
       CHECK(tls_raw_ctx_);
@@ -84,14 +106,12 @@ class TargetWrapper<TARGET(kXPU)> {
     }
     return tls_raw_ctx_;
   }
-  static void MallocL3Cache();
-  static void FreeL3Cache();
-  static bool IsSharedL3Created() {
-    return shared_l3_ptr_ == nullptr ? false : true;
-  }
+  void MallocL3Cache();
+  void FreeL3Cache();
+  bool IsSharedL3Created() { return shared_l3_ptr_ == nullptr ? false : true; }
   // **DEPRECATED**, use xpu_set_device() at the very beginning of each worker
   // thread
-  static void SetDev(int dev_no = 0) {
+  void SetDev(int dev_no = 0) {
     const char* dev_env = getenv("LITE_XPU_DEV");
     if (dev_env) {
       dev_no = atoi(dev_env);
@@ -100,17 +120,17 @@ class TargetWrapper<TARGET(kXPU)> {
     XPU_CALL(xpu_set_device(dev_no));
   }
 
-  static LITE_THREAD_LOCAL std::string multi_encoder_precision;  // NOLINT
-  static LITE_THREAD_LOCAL size_t local_l3_size;
-  static LITE_THREAD_LOCAL bool conv_autotune;
-  static LITE_THREAD_LOCAL std::string conv_autotune_file;  // NOLINT
-  static LITE_THREAD_LOCAL bool multi_encoder_adaptive_seqlen;
-  static size_t shared_l3_size;
+  std::string multi_encoder_precision;  // NOLINT
+  size_t local_l3_size{0xfffc00};
+  bool conv_autotune{false};
+  std::string conv_autotune_file;  // NOLINT
+  bool multi_encoder_adaptive_seqlen{false};
+  size_t shared_l3_size{0};
 
  private:
-  static LITE_THREAD_LOCAL xdnn::Context* tls_raw_ctx_;
-  static void* shared_l3_ptr_;
-  static std::mutex mutex_l3_;
+  xdnn::Context* tls_raw_ctx_{nullptr};
+  void* shared_l3_ptr_{nullptr};
+  std::mutex mutex_l3_;
 };
 
 }  // namespace lite
