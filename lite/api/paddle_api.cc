@@ -470,22 +470,27 @@ void CxxConfig::set_xpu_workspace_l3_size_per_thread(int l3_size) {
 
 void CxxConfig::set_xpu_l3_cache_method(size_t l3_size, bool locked) {
 #ifdef LITE_WITH_XPU
-  static std::mutex set_l3_mutex;
-  const std::lock_guard<std::mutex> lock(set_l3_mutex);
-  if (locked) {
-    if (!lite::TargetWrapperXPU::IsSharedL3Created()) {
-      lite::TargetWrapperXPU::shared_l3_size =
-          lite::TargetWrapperXPU::shared_l3_size > l3_size
-              ? lite::TargetWrapperXPU::shared_l3_size
-              : l3_size;
-    } else {
-      CHECK(lite::TargetWrapperXPU::shared_l3_size >= l3_size)
-          << "Enlarge XPU Shared L3 Cache Is Not Allowed.";
-    }
-    lite::TargetWrapperXPU::local_l3_size = 0;
-  } else {
-    lite::TargetWrapperXPU::local_l3_size = l3_size;
-  }
+  xpu_l3_size_ = l3_size;
+  xpu_l3_locked_ = locked;
+// static std::mutex set_l3_mutex;
+// const std::lock_guard<std::mutex> lock(set_l3_mutex);
+// if (locked) {
+//   if (!lite::XpuDeviceScheduler::Global().GetWrapper()->IsSharedL3Created())
+//   {
+//     lite::XpuDeviceScheduler::Global().GetWrapper()->shared_l3_size =
+//         lite::XpuDeviceScheduler::Global().GetWrapper()->shared_l3_size >
+//         l3_size
+//             ? lite::XpuDeviceScheduler::Global().GetWrapper()->shared_l3_size
+//             : l3_size;
+//   } else {
+//     CHECK(lite::XpuDeviceScheduler::Global().GetWrapper()->shared_l3_size >=
+//           l3_size)
+//         << "Enlarge XPU Shared L3 Cache Is Not Allowed.";
+//   }
+//   lite::XpuDeviceScheduler::Global().GetWrapper()->local_l3_size = 0;
+// } else {
+//   lite::XpuDeviceScheduler::Global().GetWrapper()->local_l3_size = l3_size;
+// }
 #else
   LOG(WARNING) << "The invoking of the function "
                   "'set_xpu_l3_cache_method' is ignored, please "
@@ -493,9 +498,9 @@ void CxxConfig::set_xpu_l3_cache_method(size_t l3_size, bool locked) {
 #endif
 }
 
-void CxxConfig::set_xpu_dev_per_thread(int dev_no) {
+void CxxConfig::set_xpu_devie_id(int devie_id) {
 #ifdef LITE_WITH_XPU
-  lite::TargetWrapperXPU::SetDev(dev_no);
+  xpu_device_id_ = devie_id;
 #else
   LOG(WARNING) << "The invoking of the function 'set_xpu_dev_per_thread' is "
                   "ignored, please rebuild it with LITE_WITH_XPU=ON.";
@@ -516,8 +521,8 @@ void CxxConfig::set_xpu_multi_encoder_precision(const std::string &precision) {
 void CxxConfig::set_xpu_multi_encoder_method(const std::string &precision,
                                              bool adaptive_seqlen) {
 #ifdef LITE_WITH_XPU
-  lite::TargetWrapperXPU::multi_encoder_precision = precision;
-  lite::TargetWrapperXPU::multi_encoder_adaptive_seqlen = adaptive_seqlen;
+  xpu_multi_encoder_precision_ = precision;
+  xpu_multi_encoder_adaptive_seqlen_ = adaptive_seqlen;
 #else
   LOG(WARNING) << "The invoking of the function "
                   "'set_xpu_multi_encoder_method' is "
@@ -528,8 +533,8 @@ void CxxConfig::set_xpu_multi_encoder_method(const std::string &precision,
 void CxxConfig::set_xpu_conv_autotune(bool autotune,
                                       const std::string &autotune_file) {
 #ifdef LITE_WITH_XPU
-  lite::TargetWrapperXPU::conv_autotune = autotune;
-  lite::TargetWrapperXPU::conv_autotune_file = autotune_file;
+  xpu_conv_autotune_ = autotune;
+  xpu_conv_autotune_file_ = autotune_file;
 #else
   LOG(WARNING) << "The invoking of the function "
                   "'set_xpu_conv_autotune' is ignored, please "

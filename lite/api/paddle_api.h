@@ -253,6 +253,13 @@ class LITE_API CxxConfig : public ConfigBase {
   std::vector<float> mlu_first_conv_mean_{};
   std::vector<float> mlu_first_conv_std_{};
 #endif
+  int xpu_device_id_{0};
+  size_t xpu_l3_size_{0xfffc00};
+  bool xpu_l3_locked_{false};
+  bool xpu_conv_autotune_{false};
+  std::string xpu_conv_autotune_file_{""};
+  std::string xpu_multi_encoder_precision_{""};
+  bool xpu_multi_encoder_adaptive_seqlen_{false};
 
  public:
   void set_valid_places(const std::vector<Place>& x) { valid_places_ = x; }
@@ -321,19 +328,27 @@ class LITE_API CxxConfig : public ConfigBase {
   // **DEPRECATED**, use set_xpu_l3_cache_method() in the future
   void set_xpu_workspace_l3_size_per_thread(int l3_size = 0xfffc00);
   void set_xpu_l3_cache_method(size_t l3_size, bool locked = false);
+  size_t xpu_l3_size() { return xpu_l3_size_; }
+  bool xpu_l3_locked() { return xpu_l3_locked_; }
 
   void set_xpu_conv_autotune(bool autotune = true,
                              const std::string& autotune_file = "");
+  bool xpu_conv_autotune() { return xpu_conv_autotune_; }
+  std::string xpu_conv_autotune_file() { return xpu_conv_autotune_file_; }
 
-  // XPU only, specify the target device ID for the current thread.
-  // **DEPRECATED**, use xpu_set_device() at the very beginning of each worker
-  // thread
-  void set_xpu_dev_per_thread(int dev_no = 0);
+  void set_xpu_devie_id(int devie_id = 0);
+  int xpu_device_id() { return xpu_device_id_; }
 
   // **DEPRECATED**, use set_xpu_multi_encoder_method() in the future
   void set_xpu_multi_encoder_precision(const std::string& precision = "int16");
   void set_xpu_multi_encoder_method(const std::string& precision = "int16",
                                     bool adaptive_seqlen = false);
+  std::string xpu_multi_encoder_precision() {
+    return xpu_multi_encoder_precision_;
+  }
+  bool xpu_multi_encoder_adaptive_seqlen() {
+    return xpu_multi_encoder_adaptive_seqlen_;
+  }
 
   // set input tensor for warmup.
   // It is optional. If you set prefered_inputs, model wil run immediately when
