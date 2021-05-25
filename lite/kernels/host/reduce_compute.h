@@ -12,20 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "lite/kernels/host/stack_compute.h"
+#pragma once
+#include <stdint.h>
 #include "lite/core/kernel.h"
 #include "lite/core/op_registry.h"
 
-using stack_float =
-    paddle::lite::kernels::host::StackCompute<float, PRECISION(kFloat)>;
-REGISTER_LITE_KERNEL(stack, kARM, kFloat, kNCHW, stack_float, def)
-    .BindInput("X", {LiteType::GetTensorTy(TARGET(kARM))})
-    .BindOutput("Y", {LiteType::GetTensorTy(TARGET(kARM))})
-    .Finalize();
+namespace paddle {
+namespace lite {
+namespace kernels {
+namespace host {
 
-using stack_int32 =
-    paddle::lite::kernels::host::StackCompute<int, PRECISION(kFloat)>;
-REGISTER_LITE_KERNEL(stack, kARM, kFloat, kNCHW, stack_int32, int32_def)
-    .BindInput("X", {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kInt32))})
-    .BindOutput("Y", {LiteType::GetTensorTy(TARGET(kARM), PRECISION(kInt32))})
-    .Finalize();
+template <typename T, typename Functor>
+class ReduceCompute : public KernelLite<TARGET(kHost), PRECISION(kFloat)> {
+ public:
+  void Run() override;
+
+  virtual ~ReduceCompute() = default;
+
+ private:
+};
+
+}  // namespace host
+}  // namespace kernels
+}  // namespace lite
+}  // namespace paddle

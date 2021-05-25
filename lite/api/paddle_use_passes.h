@@ -17,6 +17,7 @@
 
 USE_MIR_PASS(demo);
 USE_MIR_PASS(static_kernel_pick_pass);
+USE_MIR_PASS(op_transformation_pass);
 USE_MIR_PASS(variable_place_inference_pass);
 USE_MIR_PASS(type_target_cast_pass);
 USE_MIR_PASS(__fpga_kernel_place_correct_pass);
@@ -80,6 +81,7 @@ USE_MIR_PASS(control_flow_op_shared_inputs_and_outputs_place_sync_pass);
 USE_MIR_PASS(lite_scale_activation_fuse_pass);
 USE_MIR_PASS(lite_instance_norm_activation_fuse_pass);
 USE_MIR_PASS(ssd_boxes_calc_offline_pass);
+USE_MIR_PASS(lite_flatten_fc_fuse_pass);
 USE_MIR_PASS(lite_fc_prelu_fuse_pass);
 USE_MIR_PASS(__xpu__graph_dedup_pass);
 USE_MIR_PASS(__xpu__resnet_fuse_pass);
@@ -91,6 +93,7 @@ USE_MIR_PASS(__xpu__mmdnn_fuse_pass);
 USE_MIR_PASS(__xpu__conv2d_fuse_pass);
 USE_MIR_PASS(__xpu__resblock_reduction_fuse_pass);
 USE_MIR_PASS(__xpu__resblock_normal_fuse_pass);
+USE_MIR_PASS(__xpu__resblock_darknet_fuse_pass);
 USE_MIR_PASS(__xpu__sfa_head_meanstd_fuse_pass);
 USE_MIR_PASS(__xpu__sfa_head_moment_fuse_pass);
 USE_MIR_PASS(__xpu__softmax_topk_fuse_pass);

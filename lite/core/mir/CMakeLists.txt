@@ -11,6 +11,7 @@ add_subdirectory(subgraph)
 lite_cc_library(mir_passes
   SRCS
       fusion/fc_fuse_pass.cc
+      op_transformation_pass.cc
       fusion/matmul_fuse_pass.cc
       fusion/matmul_elementwise_add_fuse_pass.cc
       fusion/reshape2_matmul_fuse_pass.cc
@@ -32,6 +33,7 @@ lite_cc_library(mir_passes
       fusion/__xpu__resblock_reduction_fuse_pass.cc
       fusion/__xpu__concat_conv2d_fuse_pass.cc
       fusion/__xpu__resblock_normal_fuse_pass.cc
+      fusion/__xpu__resblock_darknet_fuse_pass.cc
       fusion/__xpu__resnet_fuse_pass.cc
       fusion/__xpu__resnet_cbam_fuse_pass.cc
       fusion/__xpu__conv2d_pool2d_fuse_pass.cc
@@ -60,6 +62,7 @@ lite_cc_library(mir_passes
       fusion/sequence_reverse_embedding_fuse_pass.cc
       fusion/instance_norm_activation_fuse_pass.cc
       fusion/elementwise_add_scale_fuse_pass.cc
+      fusion/flatten_fc_fuse_pass.cc
       fusion/fc_prelu_fuse_pass.cc
       elimination/identity_scale_eliminate_pass.cc
       elimination/identity_dropout_eliminate_pass.cc
