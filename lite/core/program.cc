@@ -564,6 +564,7 @@ void Instruction::Run() {
     return;
   }
 
+  LOG(INFO) << "--- op: " << op_->Type();
   op_->InferShape();
   kernel_->Launch();
   has_run_ = true;

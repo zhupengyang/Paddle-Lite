@@ -103,7 +103,7 @@ void TargetWrapperXPU::MallocL3Cache(xdnn::Context* tls_raw_ctx,
 void TargetWrapperXPU::FreeL3Cache(xdnn::Context* tls_raw_ctx,
                                    size_t l3_size,
                                    bool locked) {
-  if (!locked && l3_size > 0) {
+  if (locked && l3_size > 0) {
     void* xpu_l3_ptr = tls_raw_ctx->_l3_mgr.get_ptr();
     if (xpu_l3_ptr != nullptr) {
       XPU_CALL(xpu_wait());

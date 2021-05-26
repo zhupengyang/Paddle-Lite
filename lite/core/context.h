@@ -292,7 +292,8 @@ class Context<TargetType::kXPU> {
     tls_raw_ctx_ = ctx->TlsRawCtx();
   }
 
-  xdnn::Context* GetRawContext() { return tls_raw_ctx_.get(); }
+  // xdnn::Context* GetRawContext() { return tls_raw_ctx_.get(); }
+  xdnn::Context* GetRawContext() { return tls_raw_ctx_; }
 
   size_t L3Size() const { return l3_size_; }
 
@@ -308,7 +309,8 @@ class Context<TargetType::kXPU> {
     return multi_encoder_adaptive_seqlen_;
   }
 
-  std::shared_ptr<xdnn::Context> TlsRawCtx() const { return tls_raw_ctx_; }
+  // std::shared_ptr<xdnn::Context> TlsRawCtx() const { return tls_raw_ctx_; }
+  xdnn::Context* TlsRawCtx() const { return tls_raw_ctx_; }
 
   std::string name() const { return "XPUContext"; }
 
@@ -329,9 +331,11 @@ class Context<TargetType::kXPU> {
     }
   }
 
-  std::shared_ptr<xdnn::Context> CreateTlsRawCtx() {
-    tls_raw_ctx_ = std::shared_ptr<xdnn::Context>(
-        xdnn::create_context(), [](xdnn::Context* x) { destroy_context(x); });
+  void CreateTlsRawCtx() {
+    // tls_raw_ctx_ = std::shared_ptr<xdnn::Context>(
+    //     xdnn::create_context(), [](xdnn::Context* x) { destroy_context(x);
+    //     });
+    tls_raw_ctx_ = xdnn::create_context();
     CHECK(tls_raw_ctx_ != nullptr);
     if (conv_autotune_) {
       tls_raw_ctx_->_xpu1_conv_selector.set_autotune_loop(true);
@@ -341,7 +345,6 @@ class Context<TargetType::kXPU> {
       tls_raw_ctx_->_xpu1_conv_selector.set_autotune_file(
           conv_autotune_file_.c_str());
     }
-    return tls_raw_ctx_;
   }
 
  private:
@@ -351,7 +354,8 @@ class Context<TargetType::kXPU> {
   bool multi_encoder_adaptive_seqlen_{false};
   bool conv_autotune_{false};
   std::string conv_autotune_file_;
-  std::shared_ptr<xdnn::Context> tls_raw_ctx_;
+  // std::shared_ptr<xdnn::Context> tls_raw_ctx_;
+  xdnn::Context* tls_raw_ctx_{nullptr};
 };
 #endif
 
