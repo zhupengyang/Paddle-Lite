@@ -283,13 +283,29 @@ class Context<TargetType::kXPU> {
   }
 
   void CopySharedTo(XPUContext* ctx) {
-    l3_size_ = ctx->L3Size();
-    l3_locked_ = ctx->L3Locked();
-    conv_autotune_ = ctx->ConvAutotune();
-    conv_autotune_file_ = ctx->ConvAutotuneFile();
-    multi_encoder_precision_ = ctx->MultiEncoderPrecision();
-    multi_encoder_adaptive_seqlen_ = ctx->MultiEncoderAdaptiveSeqlen();
-    tls_raw_ctx_ = ctx->TlsRawCtx();
+    ctx->SetAttrs(l3_size_,
+                  l3_locked_,
+                  conv_autotune_,
+                  conv_autotune_file_,
+                  multi_encoder_precision_,
+                  multi_encoder_adaptive_seqlen_,
+                  tls_raw_ctx_);
+  }
+
+  void SetAttrs(const size_t l3_size,
+                const bool locked,
+                const bool autotune,
+                const std::string autotune_file,
+                const std::string precision,
+                const bool adaptive_seqlen,
+                xdnn::Context* tls_raw_ctx) {
+    l3_size_ = l3_size;
+    l3_locked_ = locked;
+    conv_autotune_ = autotune;
+    conv_autotune_file_ = autotune_file;
+    multi_encoder_precision_ = precision;
+    multi_encoder_adaptive_seqlen_ = adaptive_seqlen;
+    tls_raw_ctx_ = tls_raw_ctx;
   }
 
   // xdnn::Context* GetRawContext() { return tls_raw_ctx_.get(); }

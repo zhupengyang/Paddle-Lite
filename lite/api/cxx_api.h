@@ -169,6 +169,7 @@ class LITE_API Predictor {
     auto* insts = program_->mutable_instructions();
     XPUContext* ctx = nullptr;
     for (size_t i = 0; i < insts->size(); i++) {
+      insts->at(i).op()->Type();
       if (insts->at(i).kernel()->target() == TARGET(kXPU)) {
         ctx = &(
             insts->at(i).mutable_kernel()->mutable_context()->As<XPUContext>());
