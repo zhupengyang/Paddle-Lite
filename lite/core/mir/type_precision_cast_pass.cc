@@ -106,19 +106,17 @@ static bool InferScale(Node* var_node, Node* op_node, float* scale) {
 
 void PrecisionCastPass::Apply(const std::unique_ptr<SSAGraph>& graph) {
   // Start from inputs of the graph, those should have place set.
-  std::list<Node*> nodes;
-  for (auto& node : graph->StmtTopologicalOrder()) {
-    nodes.push_back(node);
-  }
+  auto nodes = graph->StmtTopologicalOrder();
 
   // record the copied node.
   std::map<std::string, Node*> cast_nodes;
   std::vector<std::string> skip_ops = {"while", "conditional_block"};
 
   for (auto& node : nodes) {
+    CHECK(node->IsStmt());
     auto op_type = node->AsStmt().op_type();
     auto iter = std::find(skip_ops.begin(), skip_ops.end(), op_type);
-    if (!node->IsStmt() || iter != skip_ops.end()) continue;
+    if (iter != skip_ops.end()) continue;
     auto inlinks = node->inlinks;
     for (auto* in : inlinks) {
       ComplementInputs(graph.get(), node, in, &cast_nodes);
@@ -141,9 +139,9 @@ void PrecisionCastPass::ComplementInputs(
   CHECK(in->IsRoleSet());
   CHECK(in->IsArg());
   auto in_arg_name = in->AsArg().name;
-  std::string tmp;
-  CHECK(inst.op_info()->GetInputArgname(in_arg_name, &tmp));
-  auto decl_arg_type = inst.picked_kernel().GetInputDeclType(tmp);
+  std::string decl_arg_name;
+  CHECK(inst.op_info()->GetInputArgname(in_arg_name, &decl_arg_name));
+  auto decl_arg_type = inst.picked_kernel().GetInputDeclType(decl_arg_name);
   CHECK(in->AsArg().type);
   VLOG(4) << inst.picked_kernel().name();
   if (inst.op_info()->Type() == "fetch") {
@@ -165,13 +163,29 @@ void PrecisionCastPass::ComplementInputs(
   }
   has_fp16 = has_fp16 && (in->AsArg().is_weight);
   VLOG(4) << "has_fp16: " << has_fp16 << ", arg_name: " << in->AsArg().name;
-  if ((!has_fp16) &&
-      !PrecisionCompatibleTo(*in->AsArg().type, *decl_arg_type)) {
-    VLOG(4) << "found Target unmatched tensor: " << in->AsArg().name
-            << " for kernel " << inst.op()->DebugString() << " "
-            << *in->AsArg().type << " -> " << *decl_arg_type;
+
+  auto* in_arg_type = in->arg()->type;
+  Node::Stmt* pre_inst = nullptr;
+  if (!in->inlinks.empty()) {
+    pre_inst = in->inlinks.front()->stmt();
+  }
+  if (in_arg_type->precision() == PRECISION(kAny) &&  //
+      pre_inst != nullptr &&                          //
+      pre_inst->op_type() == "io_copy") {
+    in_arg_type = pre_inst->picked_kernel().GetInputDeclType("Input");
+  }
+
+  VLOG(4) << "kernel: " << inst.op_type()
+          << ", in_arg_tensor: " << in->AsArg().name
+          << ", in_arg_type: " << *in_arg_type
+          << ", decl_arg_type: " << *decl_arg_type;
+
+  if (!has_fp16 && !PrecisionCompatibleTo(*in_arg_type, *decl_arg_type)) {
+    LOG(INFO) << "found Target unmatched tensor: " << in->AsArg().name
+              << " for kernel " << inst.op_type() << " " << *in->AsArg().type
+              << " -> " << *decl_arg_type;
     // Add an Cast instruction to make the input compatible with other dist.
-    AddCastInst(*in->AsArg().type,
+    AddCastInst(*in_arg_type,
                 *decl_arg_type,
                 in,
                 graph,
@@ -212,7 +226,7 @@ void PrecisionCastPass::AddCastInst(const Type& from,
   } else {
     auto* cast_op_output_arg = graph->NewArgumentNode(cast_op_output_name);
     cast_op_output_arg->AsArg().type =
-        LiteType::GetTensorTy(from.target(), to.precision(), from.layout());
+        LiteType::GetTensorTy(to.target(), to.precision(), to.layout());
     auto* cast_inst = graph->NewInstructNode();
 
     // create Op and kernels.
@@ -245,6 +259,7 @@ void PrecisionCastPass::AddCastInst(const Type& from,
     std::vector<std::unique_ptr<KernelBase>> selected_kernels;
     bool is_found = false;
     for (auto& kernel : kernels) {
+      if (kernel->place() != inst_node->stmt()->place()) continue;
       const Type* in_arg_ty = kernel->GetInputDeclType("Input");
       const Type* out_arg_ty = kernel->GetOutputDeclType("Out");
       if (TypeCompatible(*in_arg_ty, from) &&

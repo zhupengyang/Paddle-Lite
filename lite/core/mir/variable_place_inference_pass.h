@@ -217,7 +217,7 @@ class VariablePlaceInferencePass : public DebugPass {
   }
 
   // For kernel whose input(X) and output(Out) are both defined as any
-  // precision, while there is no detype attribute from which we can determine
+  // precision, while there is no dtype attribute from which we can determine
   // output(Out)'s precsion, we will update output(Out)'s precision directly
   // from input(X)'s precision.
   // eg.
