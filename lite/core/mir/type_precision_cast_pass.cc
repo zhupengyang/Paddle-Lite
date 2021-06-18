@@ -165,25 +165,15 @@ void PrecisionCastPass::ComplementInputs(
   VLOG(4) << "has_fp16: " << has_fp16 << ", arg_name: " << in->AsArg().name;
 
   auto* in_arg_type = in->arg()->type;
-  Node::Stmt* pre_inst = nullptr;
-  if (!in->inlinks.empty()) {
-    pre_inst = in->inlinks.front()->stmt();
-  }
-  if (in_arg_type->precision() == PRECISION(kAny) &&  //
-      pre_inst != nullptr &&                          //
-      pre_inst->op_type() == "io_copy") {
-    in_arg_type = pre_inst->picked_kernel().GetInputDeclType("Input");
-  }
-
   VLOG(4) << "kernel: " << inst.op_type()
           << ", in_arg_tensor: " << in->AsArg().name
           << ", in_arg_type: " << *in_arg_type
           << ", decl_arg_type: " << *decl_arg_type;
 
   if (!has_fp16 && !PrecisionCompatibleTo(*in_arg_type, *decl_arg_type)) {
-    LOG(INFO) << "found Target unmatched tensor: " << in->AsArg().name
-              << " for kernel " << inst.op_type() << " " << *in->AsArg().type
-              << " -> " << *decl_arg_type;
+    VLOG(4) << "found Target unmatched tensor: " << in->AsArg().name
+            << " for kernel " << inst.op_type() << " " << *in->AsArg().type
+            << " -> " << *decl_arg_type;
     // Add an Cast instruction to make the input compatible with other dist.
     AddCastInst(*in_arg_type,
                 *decl_arg_type,
