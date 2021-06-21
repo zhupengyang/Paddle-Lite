@@ -28,6 +28,13 @@ class IoCopyOp : public OpLite {
   bool Run() override;
   std::string DebugString() const override;
 
+  bool InferType() override {
+    if (param_.x) {
+      param_.y->set_precision(param_.x->precision());
+    }
+    return true;
+  }
+
   void AttachKernel(KernelBase *kernel) override { kernel->SetParam(param_); }
 
 #ifdef LITE_WITH_PROFILE
